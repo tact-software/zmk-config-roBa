@@ -17,12 +17,14 @@
 
 &trackball { scroll-layers = <5>; };
 
-&zip_temp_layer {
-    require-prior-idle-ms = <200>;
-    excluded-positions = <18 19 20 29 30>;
-};
-
 / {
+    zip_temp_layer: zip_temp_layer {
+        compatible = "zmk,input-processor-temp-layer";
+        #input-processor-cells = <2>;
+        require-prior-idle-ms = <200>;
+        excluded-positions = <18 19 20 29 30>;
+    };
+
     conditional_layers {
         compatible = "zmk,conditional-layers";
 
@@ -64,6 +66,12 @@
             bindings = <&mo 6>;
             key-positions = <41 40>;
         };
+
+        sqt_in_symbol {
+            bindings = <&kp SQT>;
+            key-positions = <17 18>;
+            layers = <1>;
+        };
     };
 
     macros {
@@ -76,29 +84,12 @@
     };
 
     behaviors {
-        lt_to_layer_0: lt_to_layer_0 {
-            compatible = "zmk,behavior-hold-tap";
-            label = "LAYER_TAP_TO_0";
-            bindings = <&mo>, <&to_layer_0>;
-
-            #binding-cells = <2>;
-            tapping-term-ms = <200>;
-        };
-
         scroll_encoder: scroll_encoder {
             compatible = "zmk,behavior-sensor-rotate";
             #sensor-binding-cells = <0>;
             bindings = <&msc SCRL_UP>, <&msc SCRL_DOWN>;
 
             tap-ms = <30>;
-        };
-
-        bspc_del: bspc_del {
-            compatible = "zmk,behavior-mod-morph";
-            bindings = <&kp BACKSPACE>, <&kp DELETE>;
-
-            mods = <(MOD_LSFT|MOD_RSFT)>;
-            #binding-cells = <0>;
         };
 
         td_ctrl_shift: td_ctrl_shift {
@@ -130,7 +121,7 @@
             bindings = <
 &kp EXCL      &kp AT         &kp HASH        &kp DLLR          &kp PRCNT                                      &kp CARET                 &kp AMPS           &kp ASTRK        &kp LPAR          &kp RPAR
 &kp NUMBER_1  &kp NUMBER_2   &kp NUMBER_3    &kp NUMBER_4      &kp NUMBER_5          &trans        &kp COLON  &kp N6                    &kp N7             &kp N8           &kp N9            &kp N0
-&kp GRAVE     &kp LESS_THAN  &kp LEFT_BRACE  &kp LEFT_BRACKET  &kp LEFT_PARENTHESIS  &kp SEMI      &kp COLON  &kp KP_RIGHT_PARENTHESIS  &kp RIGHT_BRACKET  &kp RIGHT_BRACE  &kp GREATER_THAN  &kp BACKSLASH
+&kp GRAVE     &kp LESS_THAN  &kp LEFT_BRACE  &kp LEFT_BRACKET  &kp LEFT_PARENTHESIS  &kp SEMI      &kp COLON  &kp RIGHT_PARENTHESIS  &kp RIGHT_BRACKET  &kp RIGHT_BRACE  &kp GREATER_THAN  &kp BACKSLASH
 &trans        &trans         &trans          &trans            &trans                &trans        &mo 3      &trans                                                                          &trans
             >;
 
