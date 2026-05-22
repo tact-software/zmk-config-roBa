@@ -16,7 +16,7 @@ layers:
   - {t: D, h: LCTRL}
   - {t: F, h: LSHIFT}
   - G
-  - Sft+Gui+S
+  - {t: ▽, type: trans}
   - DELETE
   - H
   - {t: J, h: RSHIFT}
@@ -28,22 +28,66 @@ layers:
   - C
   - V
   - B
-  - ':'
-  - RIGHT ALT
+  - Gui+C
+  - Gui+V
   - N
   - M
   - ','
   - .
   - /
-  - {t: LCTRL, h: LSHIFT}
-  - LEFT WIN
-  - LEFT ALT
-  - {t: LCTRL, h: LEFT SHIFT}
+  - CAPSLOCK
+  - {t: default_win, h: toggle}
+  - {t: ▽, type: trans}
+  - LEFT SHIFT
   - SPACE
   - {t: TAB, h: SYMBOL}
   - {t: BACKSPACE, h: NAV_NUM}
   - {t: ENTER, h: RIGHT GUI}
   - Ctl+SPACE
+  default_win:
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - Ctl+C
+  - Ctl+V
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: default_win, h: toggle}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
   SYMBOL:
   - '!'
   - '@'
@@ -61,7 +105,7 @@ layers:
   - '4'
   - '5'
   - {t: ▽, type: trans}
-  - ':'
+  - '"'
   - '6'
   - '7'
   - '8'
@@ -85,7 +129,7 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {type: held}
-  - FUNCTION
+  - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   NAV_NUM:
@@ -128,7 +172,7 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - FUNCTION
+  - {t: ▽, type: trans}
   - {type: held}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -194,11 +238,11 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - '&mqe MB4'
   - '&mqe MB1'
-  - {t: ▽, type: trans}
+  - {t: MOUSE, h: toggle}
   - '&mqe MB2'
-  - {t: ▽, type: trans}
+  - '&mqe MB5'
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -288,9 +332,9 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - '1'
-  - '2'
-  - '3'
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - '&bootloader'
@@ -304,8 +348,8 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {type: held}
-  - {type: held}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
   - {type: held}
   - BT CLR ALL
 combos:
@@ -316,3 +360,7 @@ combos:
   l: [SYMBOL]
 - p: [0, 1]
   k: ESC
+- p: [18, 19]
+  k: ESC
+- p: [39, 40]
+  k: FUNCTION
