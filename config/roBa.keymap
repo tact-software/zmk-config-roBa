@@ -29,13 +29,6 @@
         excluded-positions = <18 20>;
     };
 
-#ifdef CONFIG_ZMK_BEHAVIOR_MKP_QUICK_EXIT
-    mqe_input_listener: mqe_input_listener {
-        compatible = "zmk,input-listener";
-        device = <&mqe>;
-    };
-#endif
-
     conditional_layers {
         compatible = "zmk,conditional-layers";
 

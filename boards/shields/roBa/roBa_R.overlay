@@ -21,6 +21,11 @@
         device = <&trackball>;
         input-processors = <&zip_temp_layer 4 10000>;
     };
+
+    mqe_input_listener: mqe_input_listener {
+        compatible = "zmk,input-listener";
+        device = <&mqe>;
+    };
 };
 
 &pinctrl {
