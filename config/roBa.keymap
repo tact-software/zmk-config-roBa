@@ -9,13 +9,13 @@
 #define KEYS_R 5 6 7 8 9 17 18 19 20 21 29 30 31 32 33
 #define THUMBS 16 28 34 35 36 37 38 39 40 41 42
 #define LAYER_BASE        0
-#define LAYER_SYMBOL      1
-#define LAYER_NAV_NUM     2
-#define LAYER_FUNCTION    3
-#define LAYER_MOUSE       4
-#define LAYER_SCROLL      5
-#define LAYER_SYSTEM      6
-#define LAYER_DEFAULT_WIN 7
+#define LAYER_DEFAULT_WIN 1
+#define LAYER_SYMBOL      2
+#define LAYER_NAV_NUM     3
+#define LAYER_FUNCTION    4
+#define LAYER_MOUSE       5
+#define LAYER_SCROLL      6
+#define LAYER_SYSTEM      7
 
 &mt {
     flavor = "balanced";
@@ -43,8 +43,8 @@
         compatible = "zmk,conditional-layers";
 
         tri_layer {
-            if-layers = <2 3>;
-            then-layer = <4>;
+            if-layers = <LAYER_SYMBOL LAYER_NAV_NUM>;
+            then-layer = <LAYER_FUNCTION>;
         };
     };
 
@@ -52,14 +52,14 @@
         compatible = "zmk,combos";
 
         ToSystemLayer {
-            bindings = <&mo 7>;
+            bindings = <&mo LAYER_SYSTEM>;
             key-positions = <41 40>;
         };
 
         sqt_in_symbol {
             bindings = <&kp SQT>;
             key-positions = <17 18>;
-            layers = <2>;
+            layers = <LAYER_SYMBOL>;
         };
 
         esc_qw {
@@ -144,7 +144,7 @@
 &kp Q         &kp W        &kp E         &kp R           &kp T                                       &kp Y                &kp U          &kp I         &kp O        &kp P
 &hml LGUI A   &hml LALT S  &hml LCTRL D  &hml LSHIFT F   &kp G      &kp ESCAPE      &kp DELETE       &kp H                &hmr RSHIFT J  &hmr RCTRL K  &hmr RALT L  &hmr RGUI MINUS
 &kp Z         &kp X        &kp C         &kp V           &kp B      &kp LG(C)       &kp LG(V)        &kp N                &kp M          &kp COMMA     &kp DOT      &kp SLASH
-&kp CAPSLOCK  &tog 1       &kp ESCAPE    &kp LEFT_SHIFT  &kp SPACE  &lt 2 TAB       &lt 3 BACKSPACE  &mt RIGHT_GUI ENTER                                            &kp LC(SPACE)
+&kp CAPSLOCK  &tog LAYER_DEFAULT_WIN  &kp ESCAPE  &kp LEFT_SHIFT  &kp SPACE  &lt LAYER_SYMBOL TAB  &lt LAYER_NAV_NUM BACKSPACE  &mt RIGHT_GUI ENTER                                            &kp LC(SPACE)
             >;
 
             sensor-bindings = <&scroll_encoder>;
@@ -155,7 +155,7 @@
 &trans  &trans  &trans  &trans  &trans                            &trans  &trans  &trans  &trans  &trans
 &trans  &trans  &trans  &trans  &trans  &trans         &trans     &trans  &trans  &trans  &trans  &trans
 &trans  &trans  &trans  &trans  &trans  &kp LC(C)      &kp LC(V)  &trans  &trans  &trans  &trans  &trans
-&trans  &tog 1  &trans  &trans  &trans  &trans         &trans     &trans                          &trans
+&trans  &tog LAYER_DEFAULT_WIN  &trans  &trans  &trans  &trans         &trans     &trans                          &trans
             >;
 
             sensor-bindings = <&scroll_encoder_win>;
@@ -166,7 +166,7 @@
 &kp EXCL      &kp AT         &kp HASH        &kp DLLR          &kp PRCNT                                      &kp CARET              &kp AMPS           &kp ASTRK        &kp LPAR          &kp RPAR
 &kp NUMBER_1  &kp NUMBER_2   &kp NUMBER_3    &kp NUMBER_4      &kp NUMBER_5          &trans        &kp DQT    &kp N6                 &kp N7             &kp N8           &kp N9            &kp N0
 &kp GRAVE     &kp LESS_THAN  &kp LEFT_BRACE  &kp LEFT_BRACKET  &kp LEFT_PARENTHESIS  &kp SEMI      &kp COLON  &kp RIGHT_PARENTHESIS  &kp RIGHT_BRACKET  &kp RIGHT_BRACE  &kp GREATER_THAN  &kp BACKSLASH
-&trans        &trans         &trans          &trans            &trans                &trans        &mo 4      &trans                                                                       &trans
+&trans        &trans         &trans          &trans            &trans                &trans        &mo LAYER_FUNCTION      &trans                                                                       &trans
             >;
 
             sensor-bindings = <&scroll_encoder>;
@@ -177,7 +177,7 @@
 &kp CARET      &kp DLLR  &kp DOT       &kp ASTRK  &kp PLUS                            &kp PLUS  &kp MINUS  &kp ASTRK  &kp SLASH  &kp EQUAL
 &kp BACKSLASH  &kp PIPE  &kp QUESTION  &kp EXCL   &kp AMPERSAND  &trans      &kp DEL  &kp LEFT  &kp DOWN   &kp UP     &kp RIGHT  &trans
 &trans         &trans    &trans        &trans     &trans         &trans      &trans   &kp HOME  &kp PG_DN  &kp PG_UP  &kp END    &trans
-&trans         &trans    &trans        &trans     &trans         &mo 4       &trans   &trans                                     &trans
+&trans         &trans    &trans        &trans     &trans         &mo LAYER_FUNCTION       &trans   &trans                                     &trans
             >;
 
             sensor-bindings = <&scroll_encoder>;
@@ -188,7 +188,7 @@
 &kp F1  &kp F2   &kp F3   &kp F4  &kp F5                      &kp F6  &kp F7  &kp F8  &kp F9        &kp F10
 &trans  &kp F11  &kp F12  &trans  &trans  &trans      &trans  &trans  &trans  &trans  &trans        &trans
 &trans  &trans   &trans   &trans  &trans  &trans      &trans  &trans  &trans  &trans  &kp C_VOL_DN  &kp C_VOL_UP
-&trans  &trans   &trans   &trans  &trans  &trans      &trans  &mo 7                                 &kp CAPSLOCK
+&trans  &trans   &trans   &trans  &trans  &trans      &trans  &mo LAYER_SYSTEM                                 &kp CAPSLOCK
             >;
 
             sensor-bindings = <&scroll_encoder>;
@@ -199,7 +199,7 @@
 &trans  &trans  &trans  &trans  &trans                      &trans  &trans    &trans  &trans    &trans
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &mqe MB1  &trans  &mqe MB2  &trans
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans    &trans  &trans    &trans
-&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans                              &tog 6
+&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans                              &tog LAYER_SCROLL
             >;
 
             sensor-bindings = <&scroll_encoder>;
@@ -210,7 +210,7 @@
 &trans  &trans  &trans  &trans  &trans                      &trans  &trans  &trans  &trans  &trans
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans  &trans  &trans  &trans
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans                          &tog 6
+&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans                          &tog LAYER_SCROLL
             >;
 
             sensor-bindings = <&scroll_encoder>;
