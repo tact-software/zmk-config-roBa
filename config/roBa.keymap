@@ -74,6 +74,14 @@
             tap-ms = <50>;
         };
 
+        scroll_encoder_win: scroll_encoder_win {
+            compatible = "zmk,behavior-sensor-rotate";
+            #sensor-binding-cells = <0>;
+            bindings = <&msc SCRL_UP>, <&msc SCRL_DOWN>;
+
+            tap-ms = <50>;
+        };
+
         td_ctrl_shift: td_ctrl_shift {
             compatible = "zmk,behavior-hold-tap";
             label = "TD_CTRL_SHIFT";
@@ -127,8 +135,8 @@
             bindings = <
 &kp Q         &kp W        &kp E         &kp R           &kp T                                       &kp Y                &kp U          &kp I         &kp O        &kp P
 &hml LGUI A   &hml LALT S  &hml LCTRL D  &hml LSHIFT F   &kp G      &kp ESCAPE      &kp DELETE       &kp H                &hmr RSHIFT J  &hmr RCTRL K  &hmr RALT L  &hmr RGUI MINUS
-&kp Z         &kp X        &kp C         &kp V           &kp B      &kp ESCAPE      &kp ESCAPE       &kp N                &kp M          &kp COMMA     &kp DOT      &kp SLASH
-&kp CAPSLOCK  &kp ESCAPE   &kp ESCAPE    &kp LEFT_SHIFT  &kp SPACE  &lt 1 TAB       &lt 2 BACKSPACE  &mt RIGHT_GUI ENTER                                            &kp LC(SPACE)
+&kp Z         &kp X        &kp C         &kp V           &kp B      &kp LG(C)       &kp LG(V)        &kp N                &kp M          &kp COMMA     &kp DOT      &kp SLASH
+&kp CAPSLOCK  &tog 7       &kp ESCAPE    &kp LEFT_SHIFT  &kp SPACE  &lt 1 TAB       &lt 2 BACKSPACE  &mt RIGHT_GUI ENTER                                            &kp LC(SPACE)
             >;
 
             sensor-bindings = <&scroll_encoder>;
@@ -198,6 +206,17 @@
             >;
 
             sensor-bindings = <&inc_dec_kp C_VOL_DN C_VOL_UP>;
+        };
+
+        default_win {
+            bindings = <
+&trans  &trans  &trans  &trans  &trans                              &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans            &trans     &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &kp LC(C)         &kp LC(V)  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans            &trans     &trans                          &trans
+            >;
+
+            sensor-bindings = <&scroll_encoder_win>;
         };
     };
 };
