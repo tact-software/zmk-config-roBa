@@ -2,3 +2,4 @@ config ZMK_BEHAVIOR_MKP_QUICK_EXIT
     bool "Mouse key press with delayed layer-deactivate on release"
     default y
     depends on DT_HAS_ZMK_BEHAVIOR_MKP_QUICK_EXIT_ENABLED
+    depends on !ZMK_SPLIT || ZMK_SPLIT_ROLE_CENTRAL
