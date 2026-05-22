@@ -202,7 +202,7 @@
         MOUSE {
             bindings = <
 &trans  &trans  &trans  &trans  &trans                      &trans  &trans    &trans  &trans    &trans
-&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &mqe MB1  &trans  &mqe MB2  &trans
+&trans  &trans  &trans  &trans  &trans  &trans      &trans  &mqe MB4  &mqe MB1  &tog LAYER_MOUSE  &mqe MB2  &mqe MB5
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans    &trans  &trans    &trans
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans                              &tog LAYER_SCROLL
             >;
