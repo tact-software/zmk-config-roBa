@@ -59,6 +59,11 @@
             bindings = <&kp ESC>;
             key-positions = <0 1>;
         };
+
+        esc_jk {
+            bindings = <&kp ESC>;
+            key-positions = <18 19>;
+        };
     };
 
     macros {
