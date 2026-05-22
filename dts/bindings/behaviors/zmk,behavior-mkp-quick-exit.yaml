@@ -1,0 +1,15 @@
+description: |
+  Mouse button press that schedules a layer deactivation after a short delay
+  upon release. Repeated presses cancel and reschedule the pending deactivation.
+
+compatible: "zmk,behavior-mkp-quick-exit"
+
+include: one_param.yaml
+
+properties:
+  layer:
+    type: int
+    required: true
+  timeout-ms:
+    type: int
+    default: 500

@@ -15,7 +15,7 @@
 
 &lt {
     flavor = "balanced";
-    quick-tap-ms = <150>;
+    quick-tap-ms = <200>;
     require-prior-idle-ms = <125>;
 };
 
@@ -25,8 +25,8 @@
     zip_temp_layer: zip_temp_layer {
         compatible = "zmk,input-processor-temp-layer";
         #input-processor-cells = <2>;
-        require-prior-idle-ms = <200>;
-        excluded-positions = <18 19 20 29 30>;
+        require-prior-idle-ms = <300>;
+        excluded-positions = <18 20>;
     };
 
     conditional_layers {
@@ -51,6 +51,11 @@
             key-positions = <17 18>;
             layers = <1>;
         };
+
+        esc_qw {
+            bindings = <&kp ESC>;
+            key-positions = <0 1>;
+        };
     };
 
     macros {
@@ -66,9 +71,9 @@
         scroll_encoder: scroll_encoder {
             compatible = "zmk,behavior-sensor-rotate";
             #sensor-binding-cells = <0>;
-            bindings = <&msc SCRL_UP>, <&msc SCRL_DOWN>;
+            bindings = <&msc SCRL_DOWN>, <&msc SCRL_UP>;
 
-            tap-ms = <30>;
+            tap-ms = <50>;
         };
 
         td_ctrl_shift: td_ctrl_shift {
@@ -93,6 +98,13 @@
             require-prior-idle-ms = <150>;
             hold-trigger-key-positions = <KEYS_R THUMBS>;
             hold-trigger-on-release;
+        };
+
+        mqe: mkp_quick_exit {
+            compatible = "zmk,behavior-mkp-quick-exit";
+            #binding-cells = <1>;
+            layer = <4>;
+            timeout-ms = <500>;
         };
 
         hmr: home_row_mod_right {
@@ -159,10 +171,10 @@
 
         MOUSE {
             bindings = <
-&trans  &trans  &trans  &trans  &trans                      &trans  &trans    &trans    &trans    &trans
-&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &mkp MB1  &mkp MB3  &mkp MB2  &trans
-&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &mkp MB4  &mkp MB5  &trans    &trans
-&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans                                &tog 5
+&trans  &trans  &trans  &trans  &trans                      &trans  &trans    &trans  &trans    &trans
+&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &mqe MB1  &trans  &mqe MB2  &trans
+&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans    &trans  &trans    &trans
+&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans                              &tog 5
             >;
 
             sensor-bindings = <&scroll_encoder>;
@@ -187,7 +199,7 @@
 &trans  &trans        &trans        &trans        &trans  &trans      &trans       &trans                                                  &bt BT_CLR_ALL
             >;
 
-            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
+            sensor-bindings = <&inc_dec_kp C_VOL_DN C_VOL_UP>;
         };
     };
 };
