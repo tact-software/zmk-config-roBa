@@ -16,6 +16,7 @@
 #define LAYER_MOUSE       5
 #define LAYER_SCROLL      6
 #define LAYER_SYSTEM      7
+#define LAYER_CLICK       8
 
 &mt {
     flavor = "balanced";
@@ -146,7 +147,7 @@
 
         default_layer {
             bindings = <
-&kp Q         &kp W        &kp E         &kp R           &kp T                                      &kp Y                &kp U          &kp I         &kp O        &lt 6 P
+&kp Q         &kp W        &kp E         &kp R           &kp T                                      &kp Y                &kp U          &kp I         &lt LAYER_CLICK O  &lt 6 P
 &hml LGUI A   &hml LALT S  &hml LCTRL D  &hml LSHIFT F   &kp G      &trans         &kp DELETE       &kp H                &hmr RSHIFT J  &hmr RCTRL K  &hmr RALT L  &hmr RGUI MINUS
 &kp Z         &kp X        &kp C         &kp V           &kp B      &kp LG(C)      &kp LG(V)        &kp N                &kp M          &kp COMMA     &kp DOT      &kp SLASH
 &kp CAPSLOCK  &tog 1       &trans        &kp LEFT_SHIFT  &kp SPACE  &lt 2 TAB      &lt 3 BACKSPACE  &mt RIGHT_GUI ENTER                                            &kp LC(SPACE)
@@ -230,6 +231,17 @@
             >;
 
             sensor-bindings = <&inc_dec_kp C_VOL_DN C_VOL_UP>;
+        };
+
+        CLICK {
+            bindings = <
+&trans  &trans  &trans  &trans  &trans                      &trans     &trans     &trans  &trans     &trans
+&trans  &trans  &trans  &trans  &trans  &trans      &trans  &mkp MB4   &mkp MB1   &trans  &mkp MB2   &mkp MB5
+&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans     &trans     &trans  &trans     &trans
+&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans                                   &trans
+            >;
+
+            sensor-bindings = <&scroll_encoder>;
         };
     };
 };
