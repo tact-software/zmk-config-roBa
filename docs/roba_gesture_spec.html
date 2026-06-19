@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>roBa Trackball Gesture 仕様書</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg:#f6f8fa; --paper:#ffffff; --fg:#1f2328; --muted:#667085;
+      --line:#d0d7de; --soft:#f6f8fa; --code:#f3f4f6; --accent:#0969da;
+      --badge-bg:#ddf4ff; --badge-fg:#0969da;
+      --note-bg:#ddf4ff; --note-bd:#0969da;
+      --warn-bg:#fff8c5; --warn-bd:#d4a72c; --warn-fg:#9a6700;
+      --ok:#1a7f37;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:#010409; --paper:#0d1117; --fg:#e6edf3; --muted:#8b949e;
+        --line:#30363d; --soft:#161b22; --code:#161b22; --accent:#58a6ff;
+        --badge-bg:#388bfd26; --badge-fg:#58a6ff;
+        --note-bg:#388bfd1a; --note-bd:#1f6feb;
+        --warn-bg:#bb800926; --warn-bd:#bb8009; --warn-fg:#d29922;
+        --ok:#3fb950;
+      }
+    }
+    body { margin: 0; background: var(--bg); color: var(--fg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.7; }
+    main { max-width: 980px; margin: 32px auto; padding: 40px; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.04); }
+    h1, h2, h3 { line-height: 1.3; }
+    h1 { font-size: 2rem; margin: 0 0 8px; }
+    h2 { margin-top: 2.2rem; padding-bottom: .3rem; border-bottom: 1px solid var(--line); }
+    h3 { margin-top: 1.6rem; }
+    .meta { color: var(--muted); }
+    .badge { display: inline-block; padding: .12rem .5rem; border-radius: 999px; background: var(--badge-bg); color: var(--badge-fg); font-size: .85rem; font-weight: 600; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0 1.4rem; }
+    th, td { border: 1px solid var(--line); padding: .65rem .8rem; vertical-align: top; }
+    th { background: var(--soft); text-align: left; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    code { background: var(--code); border: 1px solid var(--line); border-radius: 6px; padding: .12rem .3rem; }
+    pre { background: var(--code); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; padding: 1rem; }
+    pre code { background: none; border: none; padding: 0; }
+    ul, ol { padding-left: 1.4rem; }
+    .card { background: var(--soft); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin: 16px 0; }
+    .note { border-left: 4px solid var(--note-bd); background: var(--note-bg); padding: .8rem 1rem; border-radius: 8px; margin: 1rem 0; }
+    .callout-warn { border-left: 4px solid var(--warn-bd); background: var(--warn-bg); padding: .8rem 1rem; border-radius: 8px; margin: 1rem 0; }
+    .ok { color: var(--ok); font-weight: 600; }
+    .warn { color: var(--warn-fg); font-weight: 600; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>roBa Trackball Gesture 仕様書</h1>
+  <p class="meta">対象: roBa / ZMK / Windows・macOS 両対応キーマップ</p>
+  <p><span class="badge">Draft</span> トラックボールを使ったジェスチャーレイヤー仕様。Windows と macOS で、できるだけ同じ物理操作から同じ意味の挙動を得ることを目的とする。</p>
+
+  <h2>1. 目的</h2>
+  <p>roBa のトラックボールを、通常のポインティング・スクロール操作に加えて、ウィンドウ操作やタブ操作のジェスチャー入力として利用する。</p>
+  <p>既存の mac レイヤー / Windows レイヤー構成を活用し、同じキー・同じトラックボール操作で OS ごとのショートカット差分を吸収する。</p>
+
+  <h2>2. レイヤー構成</h2>
+  <p>ジェスチャーレイヤーは OS ごとに分ける。</p>
+  <pre><code>WIN_BASE
+MAC_BASE
+
+WIN_WINDOW_GESTURE
+MAC_WINDOW_GESTURE
+
+WIN_TAB_GESTURE
+MAC_TAB_GESTURE</code></pre>
+
+  <h3>2.1 レイヤー遷移</h3>
+  <p>ジェスチャーレイヤーへの移動キーは本仕様では固定しない。各 OS のベースレイヤーから、対応する OS 用ジェスチャーレイヤーへ直接移動する。</p>
+  <table>
+    <thead>
+      <tr><th>遷移元</th><th>遷移先</th><th>用途</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>WIN_BASE</code></td><td><code>WIN_WINDOW_GESTURE</code></td><td>Windows 用ウィンドウジェスチャー</td></tr>
+      <tr><td><code>MAC_BASE</code></td><td><code>MAC_WINDOW_GESTURE</code></td><td>macOS 用ウィンドウジェスチャー</td></tr>
+      <tr><td><code>WIN_BASE</code></td><td><code>WIN_TAB_GESTURE</code></td><td>Windows 用タブジェスチャー</td></tr>
+      <tr><td><code>MAC_BASE</code></td><td><code>MAC_TAB_GESTURE</code></td><td>macOS 用タブジェスチャー</td></tr>
+    </tbody>
+  </table>
+  <p class="note">共通ジェスチャーレイヤーにせず、OS 別レイヤーでショートカット差分を定義する。物理キーの割り当てはキーマップ側の実装詳細として扱う。</p>
+
+  <h2>3. 共通ジェスチャー判定仕様</h2>
+
+  <h3>3.1 入力開始</h3>
+  <p>ジェスチャーレイヤー中にトラックボールの移動量が最小閾値を超えた時点で、ジェスチャー入力を開始する。</p>
+  <pre><code>if abs(dx) + abs(dy) &gt; start_threshold:
+    gesture_active = true</code></pre>
+
+  <h3>3.2 終了タイミング</h3>
+  <p>ジェスチャー終了は、レイヤーキーを離したタイミングではなく、トラックボールが止まったタイミングで判定する。</p>
+  <pre><code>no_input_duration &gt;= stop_timeout
+→ ジェスチャー確定
+→ 必要なキーアップを送信
+→ 累積値をリセット
+→ レイヤーキーが押されていれば次のジェスチャー待機</code></pre>
+  <p>初期値の目安:</p>
+  <table>
+    <tr><th>項目</th><th>推奨初期値</th></tr>
+    <tr><td><code>start_threshold</code></td><td>10〜20 カウント</td></tr>
+    <tr><td><code>stop_timeout</code></td><td>80〜120 ms</td></tr>
+    <tr><td><code>direction_ratio</code></td><td>2.0</td></tr>
+    <tr><td><code>step_threshold</code></td><td>60〜80 カウント</td></tr>
+    <tr><td><code>max_steps</code></td><td>5〜8 回</td></tr>
+  </table>
+
+  <h3>3.3 4方向強制判定</h3>
+  <p>斜め入力による誤爆を避けるため、方向は上下左右の4方向に限定する。</p>
+  <pre><code>if abs(dx) &gt; abs(dy) * direction_ratio:
+    direction = RIGHT if dx &gt; 0 else LEFT
+elif abs(dy) &gt; abs(dx) * direction_ratio:
+    direction = DOWN if dy &gt; 0 else UP
+else:
+    direction = NONE</code></pre>
+  <p><code>direction = NONE</code> の場合は、ジェスチャーを発火しない。</p>
+
+  <h2>4. 移動量と連続操作</h2>
+  <p>左右ジェスチャーは、ウィンドウジェスチャー・タブジェスチャーのどちらも連続移動に対応する。</p>
+  <p>ただし、短時間で素早く大きく動かした場合は「1回のフリック」とみなし、移動量が大きくても 1 ステップだけ発火する。</p>
+
+  <h3>4.1 ステップ数判定</h3>
+  <pre><code>if duration &lt; quick_flick_duration:
+    steps = 1
+else:
+    steps = clamp(floor(abs(primary_delta) / step_threshold), 1, max_steps)</code></pre>
+  <table>
+    <tr><th>項目</th><th>推奨初期値</th></tr>
+    <tr><td><code>quick_flick_duration</code></td><td>180〜220 ms</td></tr>
+    <tr><td><code>step_threshold</code></td><td>60〜80 カウント</td></tr>
+    <tr><td><code>max_steps</code></td><td>5〜8 回</td></tr>
+  </table>
+
+  <h3>4.2 挙動例</h3>
+  <table>
+    <thead><tr><th>入力</th><th>例</th><th>結果</th></tr></thead>
+    <tbody>
+      <tr><td>右に素早くフリック</td><td><code>dx=180, duration=120ms</code></td><td>右方向 1 ステップ</td></tr>
+      <tr><td>右にゆっくり長く転がす</td><td><code>dx=240, duration=500ms</code></td><td>右方向 3〜4 ステップ</td></tr>
+      <tr><td>少しだけ動かす</td><td><code>dx=20</code></td><td>閾値未満なら無視</td></tr>
+      <tr><td>斜めに動かす</td><td><code>dx=80, dy=60</code></td><td>方向が曖昧なら無視</td></tr>
+    </tbody>
+  </table>
+
+  <h2>5. ウィンドウジェスチャーレイヤー</h2>
+  <p>目的: アプリ切り替え、タスクビュー、デスクトップ表示をトラックボールで行う。</p>
+
+  <h3>5.1 割り当て</h3>
+  <table>
+    <thead>
+      <tr><th>方向</th><th>Windows</th><th>macOS</th><th>意味</th><th>連続移動</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>↑</td><td><code>Win + Tab</code></td><td><code>Mission Control</code></td><td>全体表示</td><td>なし</td></tr>
+      <tr><td>↓</td><td><code>Win + D</code></td><td>デスクトップ表示</td><td>デスクトップ表示</td><td>なし</td></tr>
+      <tr><td>→</td><td><code>Alt Down → Tab × N → Alt Up</code></td><td><code>Cmd Down → Tab × N → Cmd Up</code></td><td>次のアプリ</td><td>あり</td></tr>
+      <tr><td>←</td><td><code>Alt Down → Shift+Tab × N → Alt Up</code></td><td><code>Cmd Down → Shift+Tab × N → Cmd Up</code></td><td>前のアプリ</td><td>あり</td></tr>
+    </tbody>
+  </table>
+
+  <h3>5.2 Alt / Cmd の保持</h3>
+  <p>Windows の <code>Alt+Tab</code>、macOS の <code>Cmd+Tab</code> は、修飾キーを押したまま <code>Tab</code> を複数回送信し、停止判定時に修飾キーを離す。</p>
+  <pre><code>gesture start:
+    modifier down   // Windows: Alt, macOS: Cmd
+
+while gesture active:
+    send Tab or Shift+Tab according to step count
+
+gesture stop:
+    modifier up</code></pre>
+  <p class="note">これにより、アプリ切り替え UI を開いたまま候補を移動し、トラックボール停止時に選択を確定できる。</p>
+
+  <h2>6. タブジェスチャーレイヤー</h2>
+  <p>目的: ブラウザ、VS Code、Cursor、Finder/Explorer などでタブ操作を共通化する。</p>
+
+  <h3>6.1 割り当て</h3>
+  <table>
+    <thead>
+      <tr><th>方向</th><th>Windows</th><th>macOS</th><th>意味</th><th>連続移動</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>↑</td><td><code>Ctrl + T</code></td><td><code>Cmd + T</code></td><td>新規タブ</td><td>なし</td></tr>
+      <tr><td>↓</td><td><code>Ctrl + W</code></td><td><code>Cmd + W</code></td><td>タブを閉じる</td><td>なし</td></tr>
+      <tr><td>→</td><td><code>Ctrl Down → Tab × N → Ctrl Up</code></td><td><code>Ctrl Down → Tab × N → Ctrl Up</code></td><td>次のタブ</td><td>あり</td></tr>
+      <tr><td>←</td><td><code>Ctrl Down → Shift+Tab × N → Ctrl Up</code></td><td><code>Ctrl Down → Shift+Tab × N → Ctrl Up</code></td><td>前のタブ</td><td>あり</td></tr>
+    </tbody>
+  </table>
+  <p class="callout-warn">macOS でもブラウザや VS Code のタブ切り替えは多くの場合 <code>Ctrl+Tab</code> / <code>Ctrl+Shift+Tab</code> が使える。ただしアプリによっては <code>Cmd+Shift+[</code> / <code>Cmd+Shift+]</code> の方が自然な場合がある。</p>
+
+  <h2>7. 実装上の状態管理</h2>
+  <p>ジェスチャー処理は、最低限以下の状態を持つ。</p>
+  <pre><code>gesture_active: bool
+current_layer_type: WINDOW | TAB
+accum_dx: int
+accum_dy: int
+start_time: timestamp
+last_input_time: timestamp
+last_emitted_step: int
+held_modifier: NONE | ALT | CMD | CTRL</code></pre>
+
+  <h3>7.1 疑似コード</h3>
+  <pre><code>on_trackball_move(dx, dy):
+    if not in_gesture_layer:
+        pass through as normal pointer input
+        return
+
+    accum_dx += dx
+    accum_dy += dy
+    last_input_time = now
+
+    if not gesture_active and abs(accum_dx) + abs(accum_dy) &gt; start_threshold:
+        gesture_active = true
+        start_time = now
+
+    if gesture_active:
+        direction = resolve_4way(accum_dx, accum_dy)
+        if direction in [LEFT, RIGHT] and layer supports continuous move:
+            steps = calculate_steps(accum_dx or accum_dy, now - start_time)
+            emit_steps_until(steps)
+
+on_timer():
+    if gesture_active and now - last_input_time &gt;= stop_timeout:
+        direction = resolve_4way(accum_dx, accum_dy)
+
+        if direction in [UP, DOWN]:
+            emit_single_action(direction)
+        elif direction in [LEFT, RIGHT]:
+            ensure_steps_emitted(direction)
+
+        release_held_modifier_if_any()
+        reset_gesture_state()</code></pre>
+
+  <h2>8. OSレイヤー切り替えミス時の安全性</h2>
+  <p>Windows / macOS のベースレイヤーを間違えた状態でジェスチャーレイヤーに入った場合、OS に合わない修飾キー組み合わせが送信される。今回の用途では、基本的にはアプリ切り替え、タスクビュー、デスクトップ表示、タブ操作に限定されるため、ファイル削除や送信などの重大な破壊的操作には直結しにくい。</p>
+  <table>
+    <thead><tr><th>誤操作パターン</th><th>想定される結果</th><th>リスク</th></tr></thead>
+    <tbody>
+      <tr><td>Windows で macOS 用ジェスチャーを実行</td><td><code>Cmd</code> 相当が <code>Win</code> として扱われ、意図しない OS ショートカットが発火する可能性がある。</td><td>中</td></tr>
+      <tr><td>macOS で Windows 用ジェスチャーを実行</td><td><code>Alt</code> / <code>Win</code> 相当が <code>Option</code> / <code>Command</code> として扱われ、アプリ切り替えやメニュー操作が意図とずれる可能性がある。</td><td>中</td></tr>
+      <tr><td>タブを閉じる操作の誤発火</td><td>ブラウザやエディタの現在タブが閉じる。多くの場合は再オープン可能だが、未保存編集がある場合は注意が必要。</td><td>中</td></tr>
+      <tr><td>左右連続操作の誤発火</td><td>アプリやタブが複数個切り替わる。</td><td>低〜中</td></tr>
+    </tbody>
+  </table>
+  <p class="callout-warn">安全性を高めるため、ジェスチャーレイヤーには削除、送信、保存せず閉じる、強制終了、ログアウト、スリープ、電源操作などの破壊的・状態変更の大きい操作を割り当てない。</p>
+  <h3>8.1 安全設計の指針</h3>
+  <ul>
+    <li>上下方向のうち、特に下方向には破壊的操作を置かない。</li>
+    <li>タブを閉じる操作は便利だが、誤操作が気になる場合は別レイヤーまたは通常キーに退避する。</li>
+    <li>OS切り替え状態を確認しやすいように、Bluetoothプロファイル、LED、OLED、または明示的なレイヤー切り替えキーを併用する。</li>
+    <li>初期実装では「表示・切り替え」系に限定し、慣れてから「閉じる」系を追加する。</li>
+  </ul>
+
+  <h2>9. 設計方針</h2>
+  <ul>
+    <li>長フリック・短フリックの別機能化はしない。誤操作を避けるため、機能差ではなく移動ステップ数の差に限定する。</li>
+    <li>ジェスチャー終了はレイヤーキー解放ではなく、トラックボール停止で判定する。</li>
+    <li>左右方向は連続移動に対応する。</li>
+    <li>上下方向は単発操作に限定する。</li>
+    <li>斜め方向は無視し、4方向に強制する。</li>
+    <li>OS差分はジェスチャーレイヤーを Windows / macOS で分けて吸収する。</li>
+  </ul>
+
+  <h2>10. 初期実装の推奨範囲</h2>
+  <ol>
+    <li>ウィンドウジェスチャーレイヤーを実装する。</li>
+    <li>↑ / ↓ を単発操作として実装する。</li>
+    <li>← / → を修飾キー保持型の連続移動として実装する。</li>
+    <li>タブジェスチャーレイヤーを追加する。</li>
+    <li>閾値を実機で調整する。</li>
+  </ol>
+
+  <h2>11. Version</h2>
+  <table>
+    <thead><tr><th>Version</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><td>Draft</td><td>トラックボールジェスチャーレイヤー（ウィンドウ / タブ操作）の仕様を策定。</td></tr>
+    </tbody>
+  </table>
+</main>
+</body>
+</html>
