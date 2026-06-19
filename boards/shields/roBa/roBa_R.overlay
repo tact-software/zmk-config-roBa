@@ -21,7 +21,13 @@
         status = "okay";
         compatible = "zmk,input-listener";
         device = <&trackball>;
-        input-processors = <&zip_temp_layer LAYER_MOUSE 10000>;
+        /*
+         * Gesture processors run first: while a gesture layer is active they
+         * consume motion (STOP) so the cursor stays still and auto-mouse does
+         * not trigger. Otherwise they pass through to the auto-mouse temp-layer.
+         */
+        input-processors = <&gesture_window>, <&gesture_tab>,
+                           <&zip_temp_layer LAYER_MOUSE 10000>;
     };
 
     mqe_input_listener: mqe_input_listener {

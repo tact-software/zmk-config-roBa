@@ -17,6 +17,8 @@
 #define LAYER_SCROLL      6
 #define LAYER_SYSTEM      7
 #define LAYER_CLICK       8
+#define LAYER_WINDOW_GESTURE 9
+#define LAYER_TAB_GESTURE    10
 
 &mt {
     flavor = "balanced";
@@ -38,6 +40,37 @@
         #input-processor-cells = <2>;
         require-prior-idle-ms = <300>;
         excluded-positions = <17 18 19 20 21>;
+    };
+
+    /*
+     * Trackball gesture engine. Two instances of one reusable processor, one
+     * per gesture layer. OS is detected at runtime from LAYER_DEFAULT_WIN.
+     * Per-direction arrays are ordered <windows macos>.
+     */
+    gesture_window: gesture_window {
+        compatible = "zmk,input-processor-trackball-gesture";
+        #input-processor-cells = <0>;
+        layer = <LAYER_WINDOW_GESTURE>;
+        windows-layer = <LAYER_DEFAULT_WIN>;
+        up-keys    = <LG(TAB) LC(UP)>;     /* 全体表示: Win+Tab / Mission Control */
+        down-keys  = <LG(D)   LC(DOWN)>;   /* デスクトップ表示 / App Exposé */
+        left-keys  = <LS(TAB) LS(TAB)>;    /* 前のアプリ (Shift+Tab) */
+        right-keys = <TAB     TAB>;        /* 次のアプリ */
+        left-mods  = <LALT    LGUI>;       /* 保持修飾: Alt / Cmd */
+        right-mods = <LALT    LGUI>;
+    };
+
+    gesture_tab: gesture_tab {
+        compatible = "zmk,input-processor-trackball-gesture";
+        #input-processor-cells = <0>;
+        layer = <LAYER_TAB_GESTURE>;
+        windows-layer = <LAYER_DEFAULT_WIN>;
+        up-keys    = <LC(T)   LG(T)>;      /* 新規タブ */
+        down-keys  = <LC(W)   LG(W)>;      /* タブを閉じる */
+        left-keys  = <LS(TAB) LS(TAB)>;    /* 前のタブ (Ctrl+Shift+Tab) */
+        right-keys = <TAB     TAB>;        /* 次のタブ (Ctrl+Tab) */
+        left-mods  = <LCTRL   LCTRL>;      /* 保持修飾: Ctrl (両OS) */
+        right-mods = <LCTRL   LCTRL>;
     };
 
     conditional_layers {
@@ -147,7 +180,7 @@
 
         default_layer {
             bindings = <
-&kp Q         &kp W        &kp E         &kp R           &kp T                                      &kp Y                &kp U          &kp I         &lt LAYER_CLICK O  &lt 6 P
+&kp Q         &kp W        &kp E         &kp R           &kp T                                      &kp Y                &lt LAYER_TAB_GESTURE U  &lt LAYER_WINDOW_GESTURE I  &lt LAYER_CLICK O  &lt 6 P
 &hml LGUI A   &hml LALT S  &hml LCTRL D  &hml LSHIFT F   &kp G      &trans         &kp DELETE       &kp H                &hmr RSHIFT J  &hmr RCTRL K  &hmr RALT L  &hmr RGUI MINUS
 &kp Z         &kp X        &kp C         &kp V           &kp B      &kp LG(C)      &kp LG(V)        &kp N                &kp M          &kp COMMA     &kp DOT      &kp SLASH
 &kp CAPSLOCK  &tog 1       &trans        &kp LEFT_SHIFT  &kp SPACE  &lt 2 TAB      &lt 3 BACKSPACE  &mt RIGHT_GUI ENTER                                            &kp LC(SPACE)
@@ -239,6 +272,28 @@
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &mkp MB4   &mkp MB1   &trans  &mkp MB2   &mkp MB5
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans     &trans     &trans  &trans     &trans
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans                                   &trans
+            >;
+
+            sensor-bindings = <&scroll_encoder>;
+        };
+
+        WINDOW_GESTURE {
+            bindings = <
+&trans  &trans  &trans  &trans  &trans                      &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans                          &trans
+            >;
+
+            sensor-bindings = <&scroll_encoder>;
+        };
+
+        TAB_GESTURE {
+            bindings = <
+&trans  &trans  &trans  &trans  &trans                      &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans                          &trans
             >;
 
             sensor-bindings = <&scroll_encoder>;

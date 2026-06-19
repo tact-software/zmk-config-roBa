@@ -1,0 +1,83 @@
+description: |
+  Trackball gesture input processor. While the configured gesture layer is
+  active it consumes trackball motion, resolves a forced 4-way direction and
+  emits OS-specific keyboard shortcuts. UP/DOWN are single taps; LEFT/RIGHT are
+  continuous (a held modifier plus one key tap per movement step).
+
+  All per-direction array properties take exactly two entries ordered as
+  <windows macos>. The OS is selected at runtime from "windows-layer": when that
+  layer is active the Windows value is used, otherwise the macOS value.
+
+compatible: "zmk,input-processor-trackball-gesture"
+
+include: ip_zero_param.yaml
+
+properties:
+  layer:
+    type: int
+    required: true
+    description: Layer index that activates this gesture instance.
+  windows-layer:
+    type: int
+    required: true
+    description: When active, shortcuts are sent for Windows; otherwise macOS.
+
+  start-threshold:
+    type: int
+    default: 15
+    description: Accumulated abs(dx)+abs(dy) required to start a gesture.
+  stop-timeout-ms:
+    type: int
+    default: 100
+    description: Idle time after the last motion that ends/commits the gesture.
+  direction-ratio-x10:
+    type: int
+    default: 20
+    description: 4-way dominance ratio as fixed point x10 (20 == 2.0).
+  step-threshold:
+    type: int
+    default: 70
+    description: Counts of primary-axis travel per continuous step.
+  max-steps:
+    type: int
+    default: 6
+    description: Maximum steps emitted in one continuous gesture.
+  quick-flick-ms:
+    type: int
+    default: 200
+    description: Gestures shorter than this emit a single step (flick).
+
+  invert-x:
+    type: boolean
+    description: Negate the X axis (calibration for trackball mounting).
+  invert-y:
+    type: boolean
+    description: Negate the Y axis (calibration for trackball mounting).
+  swap-xy:
+    type: boolean
+    description: Swap X and Y axes (calibration for trackball mounting).
+
+  up-keys:
+    type: array
+    required: true
+    description: "<windows macos> keycode tapped once on UP."
+  down-keys:
+    type: array
+    required: true
+    description: "<windows macos> keycode tapped once on DOWN."
+  left-keys:
+    type: array
+    required: true
+    description: "<windows macos> keycode tapped per step on LEFT."
+  right-keys:
+    type: array
+    required: true
+    description: "<windows macos> keycode tapped per step on RIGHT."
+  left-mods:
+    type: array
+    required: true
+    description: "<windows macos> modifier held during a LEFT gesture (0 = none)."
+  right-mods:
+    type: array
+    required: true
+    description: "<windows macos> modifier held during a RIGHT gesture (0 = none)."

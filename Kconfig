@@ -3,3 +3,9 @@ config ZMK_BEHAVIOR_MKP_QUICK_EXIT
     default y
     depends on DT_HAS_ZMK_BEHAVIOR_MKP_QUICK_EXIT_ENABLED
     depends on !ZMK_SPLIT || ZMK_SPLIT_ROLE_CENTRAL
+
+config ZMK_INPUT_PROCESSOR_TRACKBALL_GESTURE
+    bool "Trackball gesture input processor"
+    default y
+    depends on DT_HAS_ZMK_INPUT_PROCESSOR_TRACKBALL_GESTURE_ENABLED
+    depends on !ZMK_SPLIT || ZMK_SPLIT_ROLE_CENTRAL

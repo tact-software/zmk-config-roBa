@@ -58,30 +58,41 @@
   <p>既存の mac レイヤー / Windows レイヤー構成を活用し、同じキー・同じトラックボール操作で OS ごとのショートカット差分を吸収する。</p>
 
   <h2>2. レイヤー構成</h2>
-  <p>ジェスチャーレイヤーは OS ごとに分ける。</p>
-  <pre><code>WIN_BASE
-MAC_BASE
+  <p>
+    本リポジトリのキーマップは「mac ベースレイヤー（<code>LAYER_BASE</code>）＋ Windows 用トグルオーバーレイ（<code>LAYER_DEFAULT_WIN</code>）」という構成で、Windows は独立したベースレイヤーではなく <code>&amp;tog</code> で被せるトグル状態として扱う。
+    そのため、ジェスチャーレイヤーは OS ごとに 4 枚へ分けず、<strong>機能ごとに 2 枚</strong>（ウィンドウ / タブ）に集約し、OS 差分はジェスチャーエンジン（C 実装）側で吸収する。
+  </p>
+  <pre><code>LAYER_BASE         (mac ベース)
+LAYER_DEFAULT_WIN  (Windows トグルオーバーレイ)
 
-WIN_WINDOW_GESTURE
-MAC_WINDOW_GESTURE
+WINDOW_GESTURE     (ウィンドウ操作・OS共通)
+TAB_GESTURE        (タブ操作・OS共通)</code></pre>
 
-WIN_TAB_GESTURE
-MAC_TAB_GESTURE</code></pre>
+  <h3>2.1 OS 判定</h3>
+  <p>ジェスチャーエンジンは、発火するキーコードを送信する直前に Windows トグルレイヤーの活性状態を見て OS を判定する。</p>
+  <pre><code>if zmk_keymap_layer_active(LAYER_DEFAULT_WIN):
+    os = WINDOWS
+else:
+    os = MACOS</code></pre>
+  <p class="note">ジェスチャーレイヤー自体は OS 共通のままにし、同じ物理操作から OS ごとのショートカットを送り分ける。これにより、レイヤー枚数と遷移キー、キーマップ重複を最小化できる。物理キーの割り当てはキーマップ側の実装詳細として扱う。</p>
 
-  <h3>2.1 レイヤー遷移</h3>
-  <p>ジェスチャーレイヤーへの移動キーは本仕様では固定しない。各 OS のベースレイヤーから、対応する OS 用ジェスチャーレイヤーへ直接移動する。</p>
+  <h3>2.2 レイヤー遷移</h3>
+  <p>ジェスチャーレイヤーへの移動キーは本仕様では固定しない。ベースレイヤー（mac / Windows いずれのトグル状態でも）から、共通の <code>WINDOW_GESTURE</code> / <code>TAB_GESTURE</code> へ移動する。</p>
   <table>
     <thead>
-      <tr><th>遷移元</th><th>遷移先</th><th>用途</th></tr>
+      <tr><th>遷移先</th><th>用途</th><th>OS 差分の扱い</th></tr>
     </thead>
     <tbody>
-      <tr><td><code>WIN_BASE</code></td><td><code>WIN_WINDOW_GESTURE</code></td><td>Windows 用ウィンドウジェスチャー</td></tr>
-      <tr><td><code>MAC_BASE</code></td><td><code>MAC_WINDOW_GESTURE</code></td><td>macOS 用ウィンドウジェスチャー</td></tr>
-      <tr><td><code>WIN_BASE</code></td><td><code>WIN_TAB_GESTURE</code></td><td>Windows 用タブジェスチャー</td></tr>
-      <tr><td><code>MAC_BASE</code></td><td><code>MAC_TAB_GESTURE</code></td><td>macOS 用タブジェスチャー</td></tr>
+      <tr><td><code>WINDOW_GESTURE</code></td><td>ウィンドウ / アプリ切り替え</td><td>エンジンが OS 判定して送信</td></tr>
+      <tr><td><code>TAB_GESTURE</code></td><td>タブ操作</td><td>エンジンが OS 判定して送信</td></tr>
     </tbody>
   </table>
-  <p class="note">共通ジェスチャーレイヤーにせず、OS 別レイヤーでショートカット差分を定義する。物理キーの割り当てはキーマップ側の実装詳細として扱う。</p>
+
+  <h3>2.3 実装方式</h3>
+  <p>
+    ジェスチャー判定は ZMK の<strong>カスタム input-processor（C 実装）</strong>として追加する（既存の <code>behavior_mkp_quick_exit</code> と同じく、<code>src/</code> 配下のモジュール + <code>Kconfig</code> + <code>dts/bindings</code> 構成）。
+    この processor を <code>trackball_listener</code> の <code>input-processors</code> チェーンに挿入し、ジェスチャーレイヤーが活性なときだけトラックボールの相対移動イベントを処理する。
+  </p>
 
   <h2>3. 共通ジェスチャー判定仕様</h2>
 
@@ -89,6 +100,11 @@ MAC_TAB_GESTURE</code></pre>
   <p>ジェスチャーレイヤー中にトラックボールの移動量が最小閾値を超えた時点で、ジェスチャー入力を開始する。</p>
   <pre><code>if abs(dx) + abs(dy) &gt; start_threshold:
     gesture_active = true</code></pre>
+  <p class="callout-warn">
+    ジェスチャーレイヤーが活性な間は、トラックボールの相対移動イベント（X / Y）を<strong>ジェスチャーエンジンで消費し、後段へ伝播させない</strong>（input-processor は <code>ZMK_INPUT_PROC_STOP</code> 相当を返す）。
+    これにより、ジェスチャー中にポインタが動いたり、オートマウス用の <code>zip_temp_layer</code>（<code>trackball_listener</code> の処理）が <code>LAYER_MOUSE</code> を被せてしまうのを防ぐ。
+    ジェスチャーレイヤーが非活性のときは、従来どおり通常のポインタ入力として素通しする。
+  </p>
 
   <h3>3.2 終了タイミング</h3>
   <p>ジェスチャー終了は、レイヤーキーを離したタイミングではなく、トラックボールが止まったタイミングで判定する。</p>
@@ -116,6 +132,9 @@ elif abs(dy) &gt; abs(dx) * direction_ratio:
 else:
     direction = NONE</code></pre>
   <p><code>direction = NONE</code> の場合は、ジェスチャーを発火しない。</p>
+  <p class="callout-warn">
+    上記の <code>dx&gt;0=RIGHT</code> / <code>dy&gt;0=DOWN</code> はあくまで論理上の定義。roBa の PMW3610 は実装上の取り付け向きにより軸が回転・反転している場合があるため（スクロール方向を Windows / mac で別エンコーダにしているのと同根の問題）、<strong>方向判定はトラックボールの実装座標に合わせて実機キャリブレーションする</strong>。必要なら符号反転や軸入れ替えのオフセットをエンジン側に持たせる。
+  </p>
 
   <h2>4. 移動量と連続操作</h2>
   <p>左右ジェスチャーは、ウィンドウジェスチャー・タブジェスチャーのどちらも連続移動に対応する。</p>
@@ -153,12 +172,15 @@ else:
       <tr><th>方向</th><th>Windows</th><th>macOS</th><th>意味</th><th>連続移動</th></tr>
     </thead>
     <tbody>
-      <tr><td>↑</td><td><code>Win + Tab</code></td><td><code>Mission Control</code></td><td>全体表示</td><td>なし</td></tr>
-      <tr><td>↓</td><td><code>Win + D</code></td><td>デスクトップ表示</td><td>デスクトップ表示</td><td>なし</td></tr>
+      <tr><td>↑</td><td><code>Win + Tab</code></td><td><code>Ctrl + Up</code></td><td>全体表示 (Task View / Mission Control)</td><td>なし</td></tr>
+      <tr><td>↓</td><td><code>Win + D</code></td><td><code>Ctrl + Down</code></td><td>Windows: デスクトップ表示 / macOS: App Exposé（現在アプリのウィンドウ一覧）</td><td>なし</td></tr>
       <tr><td>→</td><td><code>Alt Down → Tab × N → Alt Up</code></td><td><code>Cmd Down → Tab × N → Cmd Up</code></td><td>次のアプリ</td><td>あり</td></tr>
       <tr><td>←</td><td><code>Alt Down → Shift+Tab × N → Alt Up</code></td><td><code>Cmd Down → Shift+Tab × N → Cmd Up</code></td><td>前のアプリ</td><td>あり</td></tr>
     </tbody>
   </table>
+  <p class="callout-warn">
+    macOS は Mission Control の既定ショートカット <code>Ctrl + Up</code>（全体表示）/ <code>Ctrl + Down</code>（App Exposé）を用いる。いずれも既定で有効だが、システム設定 → キーボード → ショートカット → Mission Control で無効化されていないことを確認する。なお Windows の ↓（<code>Win + D</code>）はデスクトップ表示、macOS の ↓（App Exposé）は現在アプリのウィンドウ一覧表示で、厳密には意味が異なる点に注意する。
+  </p>
 
   <h3>5.2 Alt / Cmd の保持</h3>
   <p>Windows の <code>Alt+Tab</code>、macOS の <code>Cmd+Tab</code> は、修飾キーを押したまま <code>Tab</code> を複数回送信し、停止判定時に修飾キーを離す。</p>
@@ -188,6 +210,22 @@ gesture stop:
     </tbody>
   </table>
   <p class="callout-warn">macOS でもブラウザや VS Code のタブ切り替えは多くの場合 <code>Ctrl+Tab</code> / <code>Ctrl+Shift+Tab</code> が使える。ただしアプリによっては <code>Cmd+Shift+[</code> / <code>Cmd+Shift+]</code> の方が自然な場合がある。</p>
+
+  <h3>6.2 Ctrl の保持</h3>
+  <p>
+    タブ切り替え（→ / ←）も、ウィンドウジェスチャー（5.2）と同様に <code>Ctrl</code> を押したまま <code>Tab</code> を複数回送信し、停止判定時に <code>Ctrl</code> を離す<strong>修飾キー保持モデル</strong>を採用する。
+  </p>
+  <pre><code>gesture start:
+    Ctrl down
+
+while gesture active:
+    send Tab or Shift+Tab according to step count
+
+gesture stop:
+    Ctrl up</code></pre>
+  <p class="note">
+    <strong>修飾保持は意図的な設計</strong>であり、単に <code>Ctrl+Tab</code> を N 回送るのとは挙動が異なる。VS Code / Cursor、および MRU 切り替えを有効にした Firefox などでは、<code>Ctrl</code> を保持している間だけ「最近使用順（MRU）の切り替え UI」が開き、<code>Ctrl</code> を離した時点で選択が確定する。これはウィンドウ切り替えの <code>Alt</code> / <code>Cmd</code> 保持と同じ操作感で、切り替え中の候補が視覚的に分かるという利点がある。新規タブ（↑）/ タブを閉じる（↓）は単発なので保持しない。
+  </p>
 
   <h2>7. 実装上の状態管理</h2>
   <p>ジェスチャー処理は、最低限以下の状態を持つ。</p>
@@ -230,15 +268,24 @@ on_timer():
             ensure_steps_emitted(direction)
 
         release_held_modifier_if_any()
-        reset_gesture_state()</code></pre>
+        reset_gesture_state()
 
-  <h2>8. OSレイヤー切り替えミス時の安全性</h2>
-  <p>Windows / macOS のベースレイヤーを間違えた状態でジェスチャーレイヤーに入った場合、OS に合わない修飾キー組み合わせが送信される。今回の用途では、基本的にはアプリ切り替え、タスクビュー、デスクトップ表示、タブ操作に限定されるため、ファイル削除や送信などの重大な破壊的操作には直結しにくい。</p>
+on_layer_deactivate(layer):   // ジェスチャーレイヤーが OFF になったとき
+    if layer is a gesture layer:
+        release_held_modifier_if_any()   // Alt / Cmd / Ctrl の押しっぱなし防止
+        reset_gesture_state()</code></pre>
+  <p class="callout-warn">
+    <strong>修飾キー保持中にレイヤーキーを離した場合の安全策を必須とする。</strong>
+    修飾キー（Alt / Cmd / Ctrl）を保持したままジェスチャーレイヤーが非活性化されると、トラックボール停止判定（<code>on_timer</code>）が走らず修飾キーが押しっぱなしになる事故が起きうる。レイヤー非活性化イベントでも必ず <code>held_modifier</code> を解放し、状態をリセットする（既存 <code>behavior_mkp_quick_exit</code> の遅延解除と同じ発想）。
+  </p>
+
+  <h2>8. OS判定ミス時の安全性</h2>
+  <p>OS の送り分けは Windows トグルレイヤー（<code>LAYER_DEFAULT_WIN</code>）の活性状態で判定する（2.1）。実際に接続している OS とトグル状態が食い違っていると、OS に合わない修飾キー組み合わせが送信される。今回の用途では、基本的にはアプリ切り替え、タスクビュー、デスクトップ表示、タブ操作に限定されるため、ファイル削除や送信などの重大な破壊的操作には直結しにくい。</p>
   <table>
     <thead><tr><th>誤操作パターン</th><th>想定される結果</th><th>リスク</th></tr></thead>
     <tbody>
-      <tr><td>Windows で macOS 用ジェスチャーを実行</td><td><code>Cmd</code> 相当が <code>Win</code> として扱われ、意図しない OS ショートカットが発火する可能性がある。</td><td>中</td></tr>
-      <tr><td>macOS で Windows 用ジェスチャーを実行</td><td><code>Alt</code> / <code>Win</code> 相当が <code>Option</code> / <code>Command</code> として扱われ、アプリ切り替えやメニュー操作が意図とずれる可能性がある。</td><td>中</td></tr>
+      <tr><td>macOS 接続中に Windows トグルが ON</td><td>Windows 用の <code>Win</code> / <code>Alt</code> 組み合わせが macOS で <code>Command</code> / <code>Option</code> として扱われ、意図しない OS ショートカットが発火する可能性がある。</td><td>中</td></tr>
+      <tr><td>Windows 接続中に Windows トグルが OFF</td><td>macOS 用の <code>Cmd</code> / <code>Ctrl+Up</code> などが Windows で別動作となり、アプリ切り替えやデスクトップ表示が意図とずれる可能性がある。</td><td>中</td></tr>
       <tr><td>タブを閉じる操作の誤発火</td><td>ブラウザやエディタの現在タブが閉じる。多くの場合は再オープン可能だが、未保存編集がある場合は注意が必要。</td><td>中</td></tr>
       <tr><td>左右連続操作の誤発火</td><td>アプリやタブが複数個切り替わる。</td><td>低〜中</td></tr>
     </tbody>
@@ -248,7 +295,8 @@ on_timer():
   <ul>
     <li>上下方向のうち、特に下方向には破壊的操作を置かない。</li>
     <li>タブを閉じる操作は便利だが、誤操作が気になる場合は別レイヤーまたは通常キーに退避する。</li>
-    <li>OS切り替え状態を確認しやすいように、Bluetoothプロファイル、LED、OLED、または明示的なレイヤー切り替えキーを併用する。</li>
+    <li>OS（Windows トグル）状態を確認しやすいように、Bluetoothプロファイル、LED、OLED、または明示的なレイヤー切り替えキーを併用する。</li>
+    <li>修飾キー保持中にレイヤーを抜けても押しっぱなしにならないよう、レイヤー非活性化時に必ず修飾キーを解放する（7.1）。</li>
     <li>初期実装では「表示・切り替え」系に限定し、慣れてから「閉じる」系を追加する。</li>
   </ul>
 
@@ -259,16 +307,19 @@ on_timer():
     <li>左右方向は連続移動に対応する。</li>
     <li>上下方向は単発操作に限定する。</li>
     <li>斜め方向は無視し、4方向に強制する。</li>
-    <li>OS差分はジェスチャーレイヤーを Windows / macOS で分けて吸収する。</li>
+    <li>OS差分はレイヤーを分けず、ジェスチャーエンジン側で Windows トグル状態を見て送り分ける（2.1）。</li>
+    <li>ジェスチャー判定はカスタム input-processor（C 実装）として追加し、レイヤー活性時のみトラックボール移動を消費する（2.3 / 3.1）。</li>
   </ul>
 
   <h2>10. 初期実装の推奨範囲</h2>
   <ol>
-    <li>ウィンドウジェスチャーレイヤーを実装する。</li>
-    <li>↑ / ↓ を単発操作として実装する。</li>
-    <li>← / → を修飾キー保持型の連続移動として実装する。</li>
-    <li>タブジェスチャーレイヤーを追加する。</li>
-    <li>閾値を実機で調整する。</li>
+    <li>カスタム input-processor の雛形を追加し、ジェスチャーレイヤー活性時にトラックボール移動を消費（カーソル停止）できることを確認する。</li>
+    <li>方向判定（4方向強制）を実機キャリブレーションする。</li>
+    <li><code>WINDOW_GESTURE</code> を実装する（↑ / ↓ を単発、← / → を修飾キー保持型の連続移動）。</li>
+    <li>OS 判定（Windows トグル状態）による送り分けを実装する。</li>
+    <li><code>TAB_GESTURE</code> を追加する。</li>
+    <li>レイヤー非活性化時の修飾キー解放（安全策）を実装する。</li>
+    <li>閾値（<code>start_threshold</code> / <code>stop_timeout</code> / <code>step_threshold</code> など）を実機で調整する。</li>
   </ol>
 
   <h2>11. Version</h2>
@@ -276,6 +327,7 @@ on_timer():
     <thead><tr><th>Version</th><th>内容</th></tr></thead>
     <tbody>
       <tr><td>Draft</td><td>トラックボールジェスチャーレイヤー（ウィンドウ / タブ操作）の仕様を策定。</td></tr>
+      <tr><td>Draft.2</td><td>実装レビュー反映: OS差分をレイヤー分割（4枚）から「2レイヤー＋エンジン側 OS 判定」へ変更。macOS キーコードを具体化、トラックボール移動の消費・軸キャリブレーション・修飾キー解放（安全策）を追記。カスタム input-processor 方式を明記。</td></tr>
     </tbody>
   </table>
 </main>
