@@ -4,13 +4,17 @@ manifest:
       url-base: https://github.com/zmkfirmware
     - name: kumamuk-git
       url-base: https://github.com/kumamuk-git
+    - name: tact-software
+      url-base: https://github.com/tact-software
   projects:
     - name: zmk
       remote: zmkfirmware
       revision: v0.3-branch
       import: app/west.yml
+    # kumamuk-git/zmk-pmw3610-driver のフォーク。電源リセット時の初期化対策
+    # (PMW3610_INIT_POWER_UP_EXTRA_DELAY_MS) を追加したもの。
     - name: zmk-pmw3610-driver
-      remote: kumamuk-git
-      revision: main
+      remote: tact-software
+      revision: 086fe6170a24f46e6c2a2ab40f6150424aa4e092
   self:
     path: config
