@@ -38,14 +38,6 @@ properties:
     type: int
     default: 70
     description: Counts of primary-axis travel per continuous step.
-  max-steps:
-    type: int
-    default: 6
-    description: Maximum steps emitted in one continuous gesture.
-  quick-flick-ms:
-    type: int
-    default: 200
-    description: Gestures shorter than this emit a single step (flick).
 
   invert-x:
     type: boolean

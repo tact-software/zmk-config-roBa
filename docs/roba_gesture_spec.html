@@ -107,20 +107,18 @@ else:
   </p>
 
   <h3>3.2 終了タイミング</h3>
-  <p>ジェスチャー終了は、レイヤーキーを離したタイミングではなく、トラックボールが止まったタイミングで判定する。</p>
-  <pre><code>no_input_duration &gt;= stop_timeout
-→ ジェスチャー確定
-→ 必要なキーアップを送信
-→ 累積値をリセット
-→ レイヤーキーが押されていれば次のジェスチャー待機</code></pre>
+  <p>終了判定はジェスチャー種別で異なる。</p>
+  <ul>
+    <li><strong>単発（上下）</strong>: トラックボールが <code>stop_timeout</code> の間停止したら確定（1回発火）。確定後はレイヤーを保持したまま次の単発ジェスチャーを待機する。レイヤーキーを離した時点で未確定なら、その時点で確定する。</li>
+    <li><strong>連続（左右）</strong>: トラックボール停止では終了せず、<strong>レイヤーキーを離した時点で終了</strong>する。保持していた修飾キーはこのとき解放され、選択が確定する（Alt-Tab / Cmd-Tab / Ctrl-Tab を開いたまま行き来し、離して確定するのと同じ操作感）。</li>
+  </ul>
   <p>初期値の目安:</p>
   <table>
     <tr><th>項目</th><th>推奨初期値</th></tr>
     <tr><td><code>start_threshold</code></td><td>10〜20 カウント</td></tr>
-    <tr><td><code>stop_timeout</code></td><td>80〜120 ms</td></tr>
+    <tr><td><code>stop_timeout</code></td><td>80〜120 ms（単発の確定に使用）</td></tr>
     <tr><td><code>direction_ratio</code></td><td>2.0</td></tr>
     <tr><td><code>step_threshold</code></td><td>60〜80 カウント</td></tr>
-    <tr><td><code>max_steps</code></td><td>5〜8 回</td></tr>
   </table>
 
   <h3>3.3 4方向強制判定</h3>
@@ -137,29 +135,37 @@ else:
   </p>
 
   <h2>4. 移動量と連続操作</h2>
-  <p>左右ジェスチャーは、ウィンドウジェスチャー・タブジェスチャーのどちらも連続移動に対応する。</p>
-  <p>ただし、短時間で素早く大きく動かした場合は「1回のフリック」とみなし、移動量が大きくても 1 ステップだけ発火する。</p>
+  <p>左右ジェスチャー（連続）は、トラックボールの<strong>X方向の正味移動量</strong>に追従して双方向にステップする。連続モードに入った時点でまず 1 ステップ発火し、以降は <code>step_threshold</code> 進むごとに 1 ステップ。<strong>上限はなく</strong>、転がした分だけ進む。</p>
+  <p>右へ進んだ後に左へ戻すと、戻した分だけ逆方向（Shift+Tab 等）が送られ、<strong>左右の往復ができる</strong>。これによりスイッチャ上で候補を行き来して選び直せる。</p>
 
-  <h3>4.1 ステップ数判定</h3>
-  <pre><code>if duration &lt; quick_flick_duration:
-    steps = 1
-else:
-    steps = clamp(floor(abs(primary_delta) / step_threshold), 1, max_steps)</code></pre>
+  <h3>4.1 ステップ判定（双方向・アンカー方式）</h3>
+  <pre><code>// 連続モード開始時
+mod down
+anchor_x = accum_x
+emit 1 step (開始方向)
+
+// 以降、移動のたびに
+while accum_x - anchor_x &gt;= step_threshold:   // 右へ
+    emit forward (例: Tab)
+    anchor_x += step_threshold
+while accum_x - anchor_x &lt;= -step_threshold:  // 左へ（戻し）
+    emit backward (例: Shift+Tab)
+    anchor_x -= step_threshold</code></pre>
   <table>
     <tr><th>項目</th><th>推奨初期値</th></tr>
-    <tr><td><code>quick_flick_duration</code></td><td>180〜220 ms</td></tr>
     <tr><td><code>step_threshold</code></td><td>60〜80 カウント</td></tr>
-    <tr><td><code>max_steps</code></td><td>5〜8 回</td></tr>
   </table>
+  <p class="note">旧仕様の「クイックフリック判定（時間ベース）」と「最大ステップ数(<code>max_steps</code>)」は廃止。開始時の即時 1 ステップでフリック1回切替の操作感を保ちつつ、移動距離に正比例した上限なしの双方向ステップに統一した。</p>
 
   <h3>4.2 挙動例</h3>
   <table>
-    <thead><tr><th>入力</th><th>例</th><th>結果</th></tr></thead>
+    <thead><tr><th>入力</th><th>結果</th></tr></thead>
     <tbody>
-      <tr><td>右に素早くフリック</td><td><code>dx=180, duration=120ms</code></td><td>右方向 1 ステップ</td></tr>
-      <tr><td>右にゆっくり長く転がす</td><td><code>dx=240, duration=500ms</code></td><td>右方向 3〜4 ステップ</td></tr>
-      <tr><td>少しだけ動かす</td><td><code>dx=20</code></td><td>閾値未満なら無視</td></tr>
-      <tr><td>斜めに動かす</td><td><code>dx=80, dy=60</code></td><td>方向が曖昧なら無視</td></tr>
+      <tr><td>右へ少し転がして離す</td><td>右方向 1 ステップ（フリック1回切替）</td></tr>
+      <tr><td>右へ転がし続ける（保持）</td><td><code>step_threshold</code> ごとに 1 ステップ、上限なし</td></tr>
+      <tr><td>右へ3ステップ→左へ2ステップ戻す</td><td>Tab×3 の後 Shift+Tab×2（差し引き1つ先で確定）</td></tr>
+      <tr><td>少しだけ動かす (&lt; start_threshold)</td><td>閾値未満なら無視</td></tr>
+      <tr><td>斜めに動かす（方向が曖昧）</td><td>無視（4方向強制）</td></tr>
     </tbody>
   </table>
 
@@ -183,16 +189,16 @@ else:
   </p>
 
   <h3>5.2 Alt / Cmd の保持</h3>
-  <p>Windows の <code>Alt+Tab</code>、macOS の <code>Cmd+Tab</code> は、修飾キーを押したまま <code>Tab</code> を複数回送信し、停止判定時に修飾キーを離す。</p>
-  <pre><code>gesture start:
+  <p>Windows の <code>Alt+Tab</code>、macOS の <code>Cmd+Tab</code> は、修飾キーを押したまま <code>Tab</code>（戻しは <code>Shift+Tab</code>）を送信し、<strong>レイヤーキーを離した時点で修飾キーを離す</strong>。</p>
+  <pre><code>gesture start (連続モード開始):
     modifier down   // Windows: Alt, macOS: Cmd
 
-while gesture active:
-    send Tab or Shift+Tab according to step count
+while レイヤー保持中:
+    右へ転がす → Tab、左へ戻す → Shift+Tab（双方向・上限なし）
 
-gesture stop:
-    modifier up</code></pre>
-  <p class="note">これにより、アプリ切り替え UI を開いたまま候補を移動し、トラックボール停止時に選択を確定できる。</p>
+レイヤーキー解放:
+    modifier up   // ここで選択確定</code></pre>
+  <p class="note">これにより、アプリ切り替え UI を開いたまま候補を左右に行き来し、レイヤーキーを離して選択を確定できる。トラックボール停止では終了しない。</p>
 
   <h2>6. タブジェスチャーレイヤー</h2>
   <p>目的: ブラウザ、VS Code、Cursor、Finder/Explorer などでタブ操作を共通化する。</p>
@@ -229,13 +235,10 @@ gesture stop:
 
   <h2>7. 実装上の状態管理</h2>
   <p>ジェスチャー処理は、最低限以下の状態を持つ。</p>
-  <pre><code>gesture_active: bool
-current_layer_type: WINDOW | TAB
+  <pre><code>mode: NONE | SINGLE | CONTINUOUS
 accum_dx: int
 accum_dy: int
-start_time: timestamp
-last_input_time: timestamp
-last_emitted_step: int
+anchor_x: int                 // CONTINUOUS: 直近ステップ境界の accum_dx
 held_modifier: NONE | ALT | CMD | CTRL</code></pre>
 
   <h3>7.1 疑似コード</h3>
@@ -244,39 +247,40 @@ held_modifier: NONE | ALT | CMD | CTRL</code></pre>
         pass through as normal pointer input
         return
 
-    accum_dx += dx
-    accum_dy += dy
-    last_input_time = now
+    accum_dx += dx ; accum_dy += dy
 
-    if not gesture_active and abs(accum_dx) + abs(accum_dy) &gt; start_threshold:
-        gesture_active = true
-        start_time = now
-
-    if gesture_active:
+    if mode == NONE and abs(accum_dx) + abs(accum_dy) &gt; start_threshold:
         direction = resolve_4way(accum_dx, accum_dy)
-        if direction in [LEFT, RIGHT] and layer supports continuous move:
-            steps = calculate_steps(accum_dx or accum_dy, now - start_time)
-            emit_steps_until(steps)
+        if direction in [LEFT, RIGHT]:
+            mode = CONTINUOUS
+            modifier_down()              // レイヤー解放まで保持
+            anchor_x = accum_dx
+            emit_step(direction)         // 開始時に即 1 ステップ
+        elif direction in [UP, DOWN]:
+            mode = SINGLE
+        else:
+            return                       // 方向が曖昧なら待機
 
-on_timer():
-    if gesture_active and now - last_input_time &gt;= stop_timeout:
-        direction = resolve_4way(accum_dx, accum_dy)
+    if mode == CONTINUOUS:               // 双方向・上限なし
+        while accum_dx - anchor_x &gt;= step_threshold:
+            emit_forward() ; anchor_x += step_threshold
+        while accum_dx - anchor_x &lt;= -step_threshold:
+            emit_backward(); anchor_x -= step_threshold
+    elif mode == SINGLE:
+        reschedule_stop_timer(stop_timeout)
 
-        if direction in [UP, DOWN]:
-            emit_single_action(direction)
-        elif direction in [LEFT, RIGHT]:
-            ensure_steps_emitted(direction)
+on_stop_timer():                          // SINGLE のみ確定
+    if mode == SINGLE:
+        emit_single_action(resolve_4way(accum_dx, accum_dy))
+        reset_gesture_state()             // 保持したまま次の単発を待機
 
-        release_held_modifier_if_any()
-        reset_gesture_state()
-
-on_layer_deactivate(layer):   // ジェスチャーレイヤーが OFF になったとき
+on_layer_deactivate(layer):               // レイヤーキー解放 = 連続の終了点
     if layer is a gesture layer:
-        release_held_modifier_if_any()   // Alt / Cmd / Ctrl の押しっぱなし防止
+        if mode == SINGLE: emit_single_action(...)   // 停止前に離した場合の取りこぼし防止
+        release_held_modifier_if_any()    // ここで選択確定／押しっぱなし防止
         reset_gesture_state()</code></pre>
   <p class="callout-warn">
-    <strong>修飾キー保持中にレイヤーキーを離した場合の安全策を必須とする。</strong>
-    修飾キー（Alt / Cmd / Ctrl）を保持したままジェスチャーレイヤーが非活性化されると、トラックボール停止判定（<code>on_timer</code>）が走らず修飾キーが押しっぱなしになる事故が起きうる。レイヤー非活性化イベントでも必ず <code>held_modifier</code> を解放し、状態をリセットする（既存 <code>behavior_mkp_quick_exit</code> の遅延解除と同じ発想）。
+    <strong>連続（左右）はレイヤーキー解放で終了・修飾解放</strong>する。修飾キー（Alt / Cmd / Ctrl）を保持したままレイヤーが非活性化されたら必ず解放し、状態をリセットする（押しっぱなし事故の防止と選択確定を兼ねる）。単発（上下）はトラックボール停止で確定する。
   </p>
 
   <h2>8. OS判定ミス時の安全性</h2>
@@ -328,6 +332,7 @@ on_layer_deactivate(layer):   // ジェスチャーレイヤーが OFF になっ
     <tbody>
       <tr><td>Draft</td><td>トラックボールジェスチャーレイヤー（ウィンドウ / タブ操作）の仕様を策定。</td></tr>
       <tr><td>Draft.2</td><td>実装レビュー反映: OS差分をレイヤー分割（4枚）から「2レイヤー＋エンジン側 OS 判定」へ変更。macOS キーコードを具体化、トラックボール移動の消費・軸キャリブレーション・修飾キー解放（安全策）を追記。カスタム input-processor 方式を明記。</td></tr>
+      <tr><td>Draft.3</td><td>実機フィードバック反映: 連続（左右）の終了条件をトラックボール停止→<strong>レイヤーキー解放</strong>へ変更。左右の<strong>双方向往復</strong>に対応し、<code>max_steps</code> 上限と時間ベースのクイックフリック判定を廃止（アンカー方式の双方向ステップに統一）。単発（上下）はトラックボール停止で確定のまま維持。</td></tr>
     </tbody>
   </table>
 </main>

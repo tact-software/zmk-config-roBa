@@ -6,14 +6,18 @@
  * motion (so the cursor does not move and the auto-mouse temp-layer does not
  * trigger), resolves a forced 4-way direction, and emits OS-specific keyboard
  * shortcuts:
- *   - UP / DOWN  : single tap of the configured keycode.
- *   - LEFT/RIGHT : continuous mode. A modifier is held down for the duration of
- *                  the gesture while the configured key is tapped once per
- *                  movement step, and the modifier is released when the ball
- *                  stops (or when the gesture layer is deactivated). This keeps
- *                  Alt-Tab / Cmd-Tab / Ctrl-Tab style switcher UIs open.
  *
- * Every tunable (thresholds, timeouts, ratio, per-direction keycodes, held
+ *   - UP / DOWN (single): one tap of the configured keycode. Committed when the
+ *     ball stops, or when the gesture layer is released. Repeatable while held.
+ *
+ *   - LEFT / RIGHT (continuous): an Alt-Tab / Cmd-Tab / Ctrl-Tab style switcher.
+ *     The modifier is pressed when the gesture starts and is held for as long as
+ *     the gesture layer is held. Rolling right taps "forward" (e.g. Tab), rolling
+ *     left taps "backward" (e.g. Shift+Tab); the user can roll back and forth and
+ *     the steps follow, with no upper bound. The modifier is released only when
+ *     the gesture layer is released, committing the selection.
+ *
+ * Every tunable (thresholds, timeout, ratio, per-direction keycodes, held
  * modifiers, OS detection layer, axis orientation) is a devicetree property so
  * behaviour can be configured entirely from the keymap.
  */
@@ -44,6 +48,8 @@ LOG_MODULE_REGISTER(trackball_gesture, CONFIG_ZMK_LOG_LEVEL);
 
 enum tbg_dir { TBG_NONE = 0, TBG_UP, TBG_DOWN, TBG_LEFT, TBG_RIGHT };
 
+enum tbg_mode { TBG_MODE_NONE = 0, TBG_MODE_SINGLE, TBG_MODE_CONTINUOUS };
+
 struct tbg_config {
     uint8_t layer;         /* gesture layer this instance handles */
     uint8_t windows_layer; /* OS detection: active => Windows, else macOS */
@@ -51,8 +57,6 @@ struct tbg_config {
     uint16_t stop_timeout_ms;
     uint16_t direction_ratio_x10; /* fixed point: 20 == ratio 2.0 */
     uint16_t step_threshold;
-    uint16_t quick_flick_ms;
-    uint8_t max_steps;
     bool invert_x;
     bool invert_y;
     bool swap_xy;
@@ -68,15 +72,12 @@ struct tbg_config {
 struct tbg_data {
     const struct device *dev;
     struct k_work_delayable stop_work;
-    bool active;
+    enum tbg_mode mode;
     int32_t accum_dx;
     int32_t accum_dy;
     int32_t pend_dx;
     int32_t pend_dy;
-    int64_t start_time;
-    int64_t last_input_time;
-    uint8_t emitted_steps;
-    enum tbg_dir dir;
+    int32_t anchor_x; /* CONTINUOUS: accum_dx at the last emitted step boundary */
     uint32_t held_mod; /* 0 == no modifier currently held */
 };
 
@@ -124,45 +125,49 @@ static enum tbg_dir tbg_resolve(const struct tbg_config *cfg, int32_t dx, int32_
 }
 
 static void tbg_reset(struct tbg_data *data) {
-    data->active = false;
+    data->mode = TBG_MODE_NONE;
     data->accum_dx = 0;
     data->accum_dy = 0;
     data->pend_dx = 0;
     data->pend_dy = 0;
-    data->emitted_steps = 0;
-    data->dir = TBG_NONE;
+    data->anchor_x = 0;
 }
 
-static void tbg_emit_continuous(const struct device *dev, enum tbg_dir dir, int64_t now) {
+/* CONTINUOUS: emit forward/backward taps to follow net X travel, both ways. */
+static void tbg_continuous_step(const struct device *dev) {
     const struct tbg_config *cfg = dev->config;
     struct tbg_data *data = dev->data;
     uint8_t os = tbg_os_index(cfg);
-    uint32_t mod = (dir == TBG_LEFT) ? cfg->left_mods[os] : cfg->right_mods[os];
-    uint32_t key = (dir == TBG_LEFT) ? cfg->left_keys[os] : cfg->right_keys[os];
+    uint32_t fwd = cfg->right_keys[os];
+    uint32_t back = cfg->left_keys[os];
+    int32_t thr = cfg->step_threshold > 0 ? cfg->step_threshold : 1;
 
-    tbg_mod_press(data, mod);
-
-    int32_t primary = tbg_abs(data->accum_dx);
-    int64_t duration = now - data->start_time;
-    uint8_t target;
-    if (duration < cfg->quick_flick_ms) {
-        /* A fast flick is one step regardless of distance travelled. */
-        target = 1;
-    } else {
-        uint32_t steps = cfg->step_threshold ? (primary / cfg->step_threshold) : 1;
-        target = (uint8_t)CLAMP(steps, 1, cfg->max_steps);
+    while (data->accum_dx - data->anchor_x >= thr) {
+        tbg_tap(fwd);
+        data->anchor_x += thr;
     }
+    while (data->accum_dx - data->anchor_x <= -thr) {
+        tbg_tap(back);
+        data->anchor_x -= thr;
+    }
+}
 
-    while (data->emitted_steps < target) {
-        tbg_tap(key);
-        data->emitted_steps++;
+/* SINGLE: commit one action based on the resolved up/down direction. */
+static void tbg_fire_single(const struct device *dev) {
+    const struct tbg_config *cfg = dev->config;
+    struct tbg_data *data = dev->data;
+    uint8_t os = tbg_os_index(cfg);
+    enum tbg_dir dir = tbg_resolve(cfg, data->accum_dx, data->accum_dy);
+    if (dir == TBG_UP) {
+        tbg_tap(cfg->up_keys[os]);
+    } else if (dir == TBG_DOWN) {
+        tbg_tap(cfg->down_keys[os]);
     }
 }
 
 static void tbg_process(const struct device *dev) {
     const struct tbg_config *cfg = dev->config;
     struct tbg_data *data = dev->data;
-    int64_t now = k_uptime_get();
 
     int32_t dx = data->pend_dx;
     int32_t dy = data->pend_dy;
@@ -183,61 +188,44 @@ static void tbg_process(const struct device *dev) {
 
     data->accum_dx += dx;
     data->accum_dy += dy;
-    data->last_input_time = now;
 
-    if (!data->active) {
-        if (tbg_abs(data->accum_dx) + tbg_abs(data->accum_dy) > cfg->start_threshold) {
-            data->active = true;
-            data->start_time = now;
-            data->emitted_steps = 0;
-            data->dir = TBG_NONE;
-        } else {
+    if (data->mode == TBG_MODE_NONE) {
+        if (tbg_abs(data->accum_dx) + tbg_abs(data->accum_dy) <= cfg->start_threshold) {
             return;
+        }
+        enum tbg_dir dir = tbg_resolve(cfg, data->accum_dx, data->accum_dy);
+        uint8_t os = tbg_os_index(cfg);
+        if (dir == TBG_LEFT || dir == TBG_RIGHT) {
+            data->mode = TBG_MODE_CONTINUOUS;
+            k_work_cancel_delayable(&data->stop_work);
+            tbg_mod_press(data, cfg->right_mods[os]);
+            data->anchor_x = data->accum_dx;
+            /* Emit the first step immediately so a quick flick switches once. */
+            tbg_tap(dir == TBG_RIGHT ? cfg->right_keys[os] : cfg->left_keys[os]);
+        } else if (dir == TBG_UP || dir == TBG_DOWN) {
+            data->mode = TBG_MODE_SINGLE;
+        } else {
+            return; /* ambiguous, wait for more movement */
         }
     }
 
-    enum tbg_dir dir = tbg_resolve(cfg, data->accum_dx, data->accum_dy);
-    if (dir != TBG_NONE) {
-        data->dir = dir;
+    if (data->mode == TBG_MODE_CONTINUOUS) {
+        tbg_continuous_step(dev);
+    } else if (data->mode == TBG_MODE_SINGLE) {
+        /* Commit the single action once the ball stops. */
+        k_work_reschedule(&data->stop_work, K_MSEC(cfg->stop_timeout_ms));
     }
-
-    if (data->dir == TBG_LEFT || data->dir == TBG_RIGHT) {
-        tbg_emit_continuous(dev, data->dir, now);
-    }
-
-    k_work_reschedule(&data->stop_work, K_MSEC(cfg->stop_timeout_ms));
 }
 
-/* Trackball stopped: finalize single-shot directions and release held modifier. */
 static void tbg_stop_work_cb(struct k_work *work) {
     struct k_work_delayable *dwork = k_work_delayable_from_work(work);
     struct tbg_data *data = CONTAINER_OF(dwork, struct tbg_data, stop_work);
-    const struct device *dev = data->dev;
-    const struct tbg_config *cfg = dev->config;
 
-    if (data->active) {
-        uint8_t os = tbg_os_index(cfg);
-        switch (data->dir) {
-        case TBG_UP:
-            tbg_tap(cfg->up_keys[os]);
-            break;
-        case TBG_DOWN:
-            tbg_tap(cfg->down_keys[os]);
-            break;
-        case TBG_LEFT:
-        case TBG_RIGHT:
-            /* Continuous already emitted live; guarantee at least one step. */
-            if (data->emitted_steps == 0) {
-                tbg_tap(data->dir == TBG_LEFT ? cfg->left_keys[os] : cfg->right_keys[os]);
-            }
-            break;
-        default:
-            break;
-        }
+    /* Only SINGLE gestures commit on stop; CONTINUOUS ends on layer release. */
+    if (data->mode == TBG_MODE_SINGLE) {
+        tbg_fire_single(data->dev);
+        tbg_reset(data);
     }
-
-    tbg_mod_release(data);
-    tbg_reset(data);
 }
 
 static int tbg_handle_event(const struct device *dev, struct input_event *event, uint32_t param1,
@@ -293,8 +281,6 @@ static const struct zmk_input_processor_driver_api tbg_driver_api = {
         .stop_timeout_ms = DT_INST_PROP(n, stop_timeout_ms),                                       \
         .direction_ratio_x10 = DT_INST_PROP(n, direction_ratio_x10),                               \
         .step_threshold = DT_INST_PROP(n, step_threshold),                                         \
-        .quick_flick_ms = DT_INST_PROP(n, quick_flick_ms),                                         \
-        .max_steps = DT_INST_PROP(n, max_steps),                                                   \
         .invert_x = DT_INST_PROP(n, invert_x),                                                     \
         .invert_y = DT_INST_PROP(n, invert_y),                                                     \
         .swap_xy = DT_INST_PROP(n, swap_xy),                                                       \
@@ -310,7 +296,7 @@ static const struct zmk_input_processor_driver_api tbg_driver_api = {
 
 DT_INST_FOREACH_STATUS_OKAY(TBG_INST)
 
-/* Safety: release any held modifier the instant a gesture layer turns off. */
+/* Release the held modifier and reset the instant a gesture layer turns off. */
 #define TBG_DEV(n) DEVICE_DT_INST_GET(n),
 static const struct device *const tbg_devs[] = {DT_INST_FOREACH_STATUS_OKAY(TBG_DEV)};
 
@@ -326,6 +312,10 @@ static int tbg_layer_state_listener(const zmk_event_t *eh) {
         struct tbg_data *data = dev->data;
         if (cfg->layer == ev->layer) {
             k_work_cancel_delayable(&data->stop_work);
+            /* Commit a single gesture that was released before the ball stopped. */
+            if (data->mode == TBG_MODE_SINGLE) {
+                tbg_fire_single(dev);
+            }
             tbg_mod_release(data);
             tbg_reset(data);
         }
