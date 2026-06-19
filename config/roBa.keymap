@@ -85,7 +85,7 @@
         #binding-cells = <1>;
         bindings
             = <&to LAYER_BASE>
-            , <&macro_param_1to1>
+            , <&macro_param_1to2>
             , <&bt BT_SEL MACRO_PLACEHOLDER>;
     };
 
@@ -94,7 +94,7 @@
         #binding-cells = <1>;
         bindings
             = <&to LAYER_DEFAULT_WIN>
-            , <&macro_param_1to1>
+            , <&macro_param_1to2>
             , <&bt BT_SEL MACRO_PLACEHOLDER>;
     };
 
