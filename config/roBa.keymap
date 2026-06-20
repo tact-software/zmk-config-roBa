@@ -219,7 +219,7 @@
 &trans  &trans                  &trans  &trans  &trans                            &trans  &trans  &trans  &trans  &trans
 &trans  &trans                  &trans  &trans  &trans  &trans         &trans     &trans  &trans  &trans  &trans  &trans
 &trans  &trans                  &trans  &trans  &trans  &kp LC(C)      &kp LC(V)  &trans  &trans  &trans  &trans  &trans
-&trans  &tog LAYER_DEFAULT_WIN  &trans  &trans  &trans  &trans         &trans     &trans                          &trans
+&trans  &tog LAYER_DEFAULT_WIN  &trans  &trans  &trans  &trans         &trans     &trans                          &kp LG(SPACE)
             >;
 
             sensor-bindings = <&scroll_encoder_win>;
