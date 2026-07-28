@@ -138,19 +138,12 @@
     };
 
     behaviors {
-        scroll_encoder: scroll_encoder {
-            compatible = "zmk,behavior-sensor-rotate";
-            #sensor-binding-cells = <0>;
-            bindings = <&msc SCRL_DOWN>, <&msc SCRL_UP>;
-
-            tap-ms = <50>;
-        };
-
         /*
-         * Windows用。トラックボールのスクロールレイヤー(下に転がすと下へ
-         * スクロール)と体感を揃えるため、時計回り=下方向とする。
+         * トラックボールのスクロールレイヤー(下に転がすと下へスクロール)と
+         * 体感を揃えるため、時計回り=下方向とする。Mac/Windows共通で
+         * 問題ないことを実機確認済み。
          */
-        scroll_encoder_win: scroll_encoder_win {
+        scroll_encoder: scroll_encoder {
             compatible = "zmk,behavior-sensor-rotate";
             #sensor-binding-cells = <0>;
             bindings = <&msc SCRL_DOWN>, <&msc SCRL_UP>;
@@ -226,7 +219,7 @@
 &trans  &tog LAYER_DEFAULT_WIN  &trans  &trans  &trans  &trans         &trans     &trans                          &kp LG(SPACE)
             >;
 
-            sensor-bindings = <&scroll_encoder_win>;
+            sensor-bindings = <&scroll_encoder>;
         };
 
         SYMBOL {
