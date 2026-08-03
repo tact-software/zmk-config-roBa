@@ -139,11 +139,23 @@
 
     behaviors {
         /*
-         * トラックボールのスクロールレイヤー(下に転がすと下へスクロール)と
-         * 体感を揃えるため、時計回り=下方向とする。Mac/Windows共通で
-         * 問題ないことを実機確認済み。
+         * Mac用(ナチュラルスクロール前提)。時計回り=上方向イベントを送る。
+         * トラックボール側も CONFIG_PMW3610_INVERT_SCROLL_Y=y (roBa_R.conf)
+         * で同じ向きに反転している。
          */
         scroll_encoder: scroll_encoder {
+            compatible = "zmk,behavior-sensor-rotate";
+            #sensor-binding-cells = <0>;
+            bindings = <&msc SCRL_UP>, <&msc SCRL_DOWN>;
+
+            tap-ms = <50>;
+        };
+
+        /*
+         * Windows用。時計回り=下方向。トラックボール側は roBa_R.overlay の
+         * win_scroll_invert (zip_scroll_transform) が同じ向きを維持する。
+         */
+        scroll_encoder_win: scroll_encoder_win {
             compatible = "zmk,behavior-sensor-rotate";
             #sensor-binding-cells = <0>;
             bindings = <&msc SCRL_DOWN>, <&msc SCRL_UP>;
@@ -219,7 +231,7 @@
 &trans  &tog LAYER_DEFAULT_WIN  &trans  &trans  &trans  &trans         &trans     &trans                          &kp LG(SPACE)
             >;
 
-            sensor-bindings = <&scroll_encoder>;
+            sensor-bindings = <&scroll_encoder_win>;
         };
 
         SYMBOL {
