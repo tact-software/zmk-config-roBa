@@ -1,5 +1,9 @@
 #include "roBa.dtsi"
+#include <input/processors.dtsi>
+#include <dt-bindings/zmk/input_transform.h>
 
+/* config/roBa.keymap のレイヤー定義と一致させること */
+#define LAYER_DEFAULT_WIN 1
 #define LAYER_MOUSE 5
 
 &default_transform {
@@ -28,6 +32,18 @@
          */
         input-processors = <&gesture_window>, <&gesture_tab>,
                            <&zip_temp_layer LAYER_MOUSE 10000>;
+
+        /*
+         * ドライバは CONFIG_PMW3610_INVERT_SCROLL_Y=y でMac向き(ナチュラル)
+         * のスクロールを出力する。Windowsモード中はホイールイベントだけ
+         * 再反転して従来方向を維持する。process-next を付けないとベースの
+         * プロセッサ(ジェスチャー/自動マウスレイヤー)がスキップされる点に注意。
+         */
+        win_scroll_invert {
+            layers = <LAYER_DEFAULT_WIN>;
+            input-processors = <&zip_scroll_transform (INPUT_TRANSFORM_Y_INVERT)>;
+            process-next;
+        };
     };
 
     mqe_input_listener: mqe_input_listener {
