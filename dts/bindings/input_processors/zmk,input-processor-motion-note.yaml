@@ -1,0 +1,8 @@
+description: |
+  Pass-through input processor that records the uptime of the last relative
+  pointer event (motion or wheel) for the mkp-quick-exit behavior's typing
+  gate. It never modifies or consumes events.
+
+compatible: "zmk,input-processor-motion-note"
+
+include: ip_zero_param.yaml

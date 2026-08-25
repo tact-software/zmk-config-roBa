@@ -187,11 +187,19 @@
             hold-trigger-on-release;
         };
 
+        /*
+         * param1=クリック, param2=フォールバック文字。直近 motion-grace-ms
+         * 以内にポインタ活動(トラックボール移動 or クリック)が無ければ
+         * クリックではなく param2 の文字を送出する。フォールバック時は
+         * レイヤー状態に触れない(tog ロックを壊さず、自動レイヤーは
+         * 自身のタイムアウトで消える)。motion-grace-ms = 0 でゲート無効。
+         */
         mqe: mkp_quick_exit {
             compatible = "zmk,behavior-mkp-quick-exit";
-            #binding-cells = <1>;
+            #binding-cells = <2>;
             layer = <LAYER_MOUSE>;
             timeout-ms = <500>;
+            motion-grace-ms = <1200>;
         };
 
         hmr: home_row_mod_right {
@@ -243,12 +251,19 @@
             >;
         };
 
+        /*
+         * 左手ホームロウに hml を載せ、矢印レイヤー保持中でも
+         * Shift/Ctrl/Alt/GUI + 矢印 (範囲選択・単語単位の移動) を打てるように
+         * する。&trans にすると記号が失われるため、タップ時は従来どおり
+         * \ | ? ! を出す。hml は hold-trigger-key-positions = <KEYS_R THUMBS>
+         * のため、左手だけで記号を連打しても hold には化けない。
+         */
         NAV_NUM {
             bindings = <
-&kp CARET      &kp DLLR  &kp DOT       &kp ASTRK  &kp PLUS                            &kp PLUS  &kp MINUS  &kp ASTRK  &kp SLASH  &kp EQUAL
-&kp BACKSLASH  &kp PIPE  &kp QUESTION  &kp EXCL   &kp AMPERSAND  &trans      &kp DEL  &kp LEFT  &kp DOWN   &kp UP     &kp RIGHT  &trans
-&trans         &trans    &trans        &trans     &trans         &trans      &trans   &kp HOME  &kp PG_DN  &kp PG_UP  &kp END    &trans
-&trans         &trans    &trans        &trans     &trans         &trans      &trans   &trans                                     &trans
+&kp CARET            &kp DLLR        &kp DOT              &kp ASTRK         &kp PLUS                                &kp PLUS  &kp MINUS  &kp ASTRK  &kp SLASH  &kp EQUAL
+&hml LGUI BACKSLASH  &hml LALT PIPE  &hml LCTRL QUESTION  &hml LSHIFT EXCL  &kp AMPERSAND  &trans      &kp DEL  &kp LEFT  &kp DOWN   &kp UP     &kp RIGHT  &trans
+&trans               &trans          &trans               &trans            &trans         &trans      &trans   &kp HOME  &kp PG_DN  &kp PG_UP  &kp END    &trans
+&trans               &trans          &trans               &trans            &trans         &trans      &trans   &trans                                     &trans
             >;
         };
 
@@ -264,7 +279,7 @@
         MOUSE {
             bindings = <
 &trans  &trans  &trans  &trans  &trans                      &trans    &trans    &trans            &trans    &trans
-&trans  &trans  &trans  &trans  &trans  &trans      &trans  &mqe MB4  &mqe MB1  &tog LAYER_MOUSE  &mqe MB2  &mqe MB5
+&trans  &trans  &trans  &trans  &trans  &trans      &trans  &mqe MB4 H  &mqe MB1 J  &mqe MB5 K  &mqe MB2 L  &tog LAYER_MOUSE
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans    &trans    &trans            &trans    &trans
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans                                          &tog LAYER_SCROLL
             >;

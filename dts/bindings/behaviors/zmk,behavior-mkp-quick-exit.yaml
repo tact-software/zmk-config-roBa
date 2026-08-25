@@ -2,9 +2,15 @@ description: |
   Mouse button press that schedules a layer deactivation after a short delay
   upon release. Repeated presses cancel and reschedule the pending deactivation.
 
+  param1 is the mouse button. param2 is an optional fallback keycode: when it
+  and motion-grace-ms are both non-zero, a press with no pointer activity
+  (trackball motion / previous click) within the last motion-grace-ms sends
+  the fallback keycode instead of the mouse button, so typing shortly after
+  mouse use produces letters again. Pass 0 to keep unconditional clicks.
+
 compatible: "zmk,behavior-mkp-quick-exit"
 
-include: one_param.yaml
+include: two_param.yaml
 
 properties:
   layer:
@@ -13,3 +19,7 @@ properties:
   timeout-ms:
     type: int
     default: 500
+  motion-grace-ms:
+    type: int
+    default: 0
+    description: Pointer-activity window in ms for the fallback gate (0 = off).
