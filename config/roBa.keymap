@@ -243,12 +243,19 @@
             >;
         };
 
+        /*
+         * 左手ホームロウに hml を載せ、矢印レイヤー保持中でも
+         * Shift/Ctrl/Alt/GUI + 矢印 (範囲選択・単語単位の移動) を打てるように
+         * する。&trans にすると記号が失われるため、タップ時は従来どおり
+         * \ | ? ! を出す。hml は hold-trigger-key-positions = <KEYS_R THUMBS>
+         * のため、左手だけで記号を連打しても hold には化けない。
+         */
         NAV_NUM {
             bindings = <
-&kp CARET      &kp DLLR  &kp DOT       &kp ASTRK  &kp PLUS                            &kp PLUS  &kp MINUS  &kp ASTRK  &kp SLASH  &kp EQUAL
-&kp BACKSLASH  &kp PIPE  &kp QUESTION  &kp EXCL   &kp AMPERSAND  &trans      &kp DEL  &kp LEFT  &kp DOWN   &kp UP     &kp RIGHT  &trans
-&trans         &trans    &trans        &trans     &trans         &trans      &trans   &kp HOME  &kp PG_DN  &kp PG_UP  &kp END    &trans
-&trans         &trans    &trans        &trans     &trans         &trans      &trans   &trans                                     &trans
+&kp CARET            &kp DLLR        &kp DOT              &kp ASTRK         &kp PLUS                                &kp PLUS  &kp MINUS  &kp ASTRK  &kp SLASH  &kp EQUAL
+&hml LGUI BACKSLASH  &hml LALT PIPE  &hml LCTRL QUESTION  &hml LSHIFT EXCL  &kp AMPERSAND  &trans      &kp DEL  &kp LEFT  &kp DOWN   &kp UP     &kp RIGHT  &trans
+&trans               &trans          &trans               &trans            &trans         &trans      &trans   &kp HOME  &kp PG_DN  &kp PG_UP  &kp END    &trans
+&trans               &trans          &trans               &trans            &trans         &trans      &trans   &trans                                     &trans
             >;
         };
 
