@@ -21,6 +21,16 @@
 };
 
 / {
+    /*
+     * Records the last pointer-activity uptime for mkp-quick-exit's typing
+     * gate. Must sit after the gesture processors (their motion is not
+     * "mouse use") and before the auto-mouse temp-layer.
+     */
+    zip_motion_note: zip_motion_note {
+        compatible = "zmk,input-processor-motion-note";
+        #input-processor-cells = <0>;
+    };
+
     trackball_listener {
         status = "okay";
         compatible = "zmk,input-listener";
@@ -31,6 +41,7 @@
          * not trigger. Otherwise they pass through to the auto-mouse temp-layer.
          */
         input-processors = <&gesture_window>, <&gesture_tab>,
+                           <&zip_motion_note>,
                            <&zip_temp_layer LAYER_MOUSE 10000>;
 
         /*
