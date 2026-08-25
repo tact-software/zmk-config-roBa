@@ -87,7 +87,7 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - Gui+SPACE
   SYMBOL:
   - '!'
   - '@'
@@ -143,10 +143,10 @@ layers:
   - '*'
   - /
   - '='
-  - \
-  - '|'
-  - '?'
-  - '!'
+  - {t: \, h: LGUI}
+  - {t: '|', h: LALT}
+  - {t: '?', h: LCTRL}
+  - {t: '!', h: LSHIFT}
   - '&'
   - {t: ▽, type: trans}
   - DEL
@@ -238,11 +238,11 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - '&mqe MB4'
-  - '&mqe MB1'
+  - '&mqe MB4 H'
+  - '&mqe MB1 J'
+  - '&mqe MB5 K'
+  - '&mqe MB2 L'
   - {t: MOUSE, h: toggle}
-  - '&mqe MB2'
-  - '&mqe MB5'
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
