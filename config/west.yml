@@ -2,18 +2,19 @@ manifest:
   remotes:
     - name: zmkfirmware
       url-base: https://github.com/zmkfirmware
-    - name: kumamuk-git
-      url-base: https://github.com/kumamuk-git
+    - name: tact-software
+      url-base: https://github.com/tact-software
   projects:
     - name: zmk
       remote: zmkfirmware
       revision: v0.3-branch
       import: app/west.yml
-    # roBa標準のkumamuk版ドライバ。再現性のためコミット固定。
-    # (旧: tact-softwareフォークの初期化遅延対策は熱起因のハード事象と
-    #  判明し不使用となったため、フォーク元へ戻した)
+    # 自アカウントのフォーク (Dist16384系、Cygnusと同一ドライバ・同一コミット)。
+    # AUTO_RECOVERY (初期化リトライ + 3秒毎ヘルスチェックによる自動再初期化) が
+    # 熱起因のセンサー脱落への対策になる。問題が出た場合は
+    # CONFIG_PMW3610_HEALTH_VERIFY_CONFIG=n で読み戻し検証だけ無効化できる。
     - name: zmk-pmw3610-driver
-      remote: kumamuk-git
-      revision: 5e04553ab803d24405bd45621a41310ea3050e59
+      remote: tact-software
+      revision: c5e190c90bd03dc450105fde12d676bc34e6825e
   self:
     path: config
